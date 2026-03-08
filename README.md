@@ -2,6 +2,15 @@
 
 A personal productivity web app to track focused work sessions, categorize time usage, and generate daily/weekly insights.
 
+## Table of Contents
+- [1. Run Locally](#1-run-locally)
+- [2. Project Structure](#2-project-structure)
+- [3. Tech Stack](#3-tech-stack)
+- [4. Developer Plugins + Commit Naming](#4-developer-plugins--commit-naming)
+- [5. Branch Naming Convention](#5-branch-naming-convention)
+- [6. Database Schema Diagram](#6-database-schema-diagram)
+- [7. Architecture Overview](#7-architecture-overview)
+
 ## 1. Run Locally
 
 ### Setup
