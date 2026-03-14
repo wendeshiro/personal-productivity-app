@@ -48,6 +48,27 @@ const categoryIconMap = {
   Communication: "/image/comm-fill.svg",
 };
 
+const parseTimeToSeconds = (timeValue) => {
+  const parts = String(timeValue)
+    .split(":")
+    .map((part) => Number(part));
+
+  if (parts.length !== 3 || parts.some((part) => Number.isNaN(part))) {
+    return 0;
+  }
+
+  const [hours, minutes, seconds] = parts;
+  return hours * 3600 + minutes * 60 + seconds;
+};
+
+const formatSecondsToTime = (totalSeconds) => {
+  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+  const hours = String(Math.floor(safeSeconds / 3600)).padStart(2, "0");
+  const minutes = String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, "0");
+  const seconds = String(safeSeconds % 60).padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
+};
+
 export const renderHome = (_req, res) => {
   const categories = [
     { name: "Focus", tone: "focus" },
@@ -112,6 +133,7 @@ export const createActivity = (req, res) => {
   nextActivityId += 1;
 
   const query = new URLSearchParams({
+    activityId: String(nextActivityId - 1),
     activityName,
     category,
   });
@@ -136,6 +158,7 @@ export const deleteActivity = (req, res) => {
 };
 
 export const renderTimerScreen = (req, res) => {
+  const activityId = Number(req.query.activityId);
   const activityName =
     typeof req.query.activityName === "string" && req.query.activityName.trim()
       ? req.query.activityName.trim()
@@ -146,13 +169,75 @@ export const renderTimerScreen = (req, res) => {
       ? req.query.category.trim()
       : "Category";
 
-  const activityIcon = categoryIconMap[category] || categoryIconMap.Focus;
+  const matchedActivity =
+    (!Number.isNaN(activityId) && activities.find((activity) => activity.id === activityId)) ||
+    activities.find((activity) => activity.name === activityName && activity.category === category);
+
+  const resolvedActivityId = matchedActivity ? matchedActivity.id : null;
+  const resolvedName = matchedActivity ? matchedActivity.name : activityName;
+  const resolvedCategory = matchedActivity ? matchedActivity.category : category;
+  const resolvedTotalTime = matchedActivity ? matchedActivity.totalTime : "00:00:00";
+  const activityIcon = categoryIconMap[resolvedCategory] || categoryIconMap.Focus;
 
   res.render("timer", {
     pageTitle: "Timer Screen",
-    activityName,
-    category,
+    activityId: resolvedActivityId,
+    activityName: resolvedName,
+    category: resolvedCategory,
     activityIcon,
     timerValue: "00:00:00",
+    totalTime: resolvedTotalTime,
+  });
+};
+
+export const renderActivitySummary = (req, res) => {
+  const activityId = Number(req.body.activityId);
+  const activityName =
+    typeof req.body.activityName === "string" && req.body.activityName.trim()
+      ? req.body.activityName.trim()
+      : "Activity Name";
+  const category =
+    typeof req.body.category === "string" && req.body.category.trim()
+      ? req.body.category.trim()
+      : "Category";
+  const sessionTime =
+    typeof req.body.sessionTime === "string" && req.body.sessionTime.trim()
+      ? req.body.sessionTime.trim()
+      : "00:00:00";
+
+  const sessionSeconds = parseTimeToSeconds(sessionTime);
+
+  const matchedActivity =
+    (!Number.isNaN(activityId) && activities.find((activity) => activity.id === activityId)) ||
+    activities.find((activity) => activity.name === activityName && activity.category === category);
+
+  const previousTotalSeconds = matchedActivity ? parseTimeToSeconds(matchedActivity.totalTime) : 0;
+  const updatedTotalSeconds = previousTotalSeconds + sessionSeconds;
+  const updatedTotalTime = formatSecondsToTime(updatedTotalSeconds);
+  const previousTotalTime = formatSecondsToTime(previousTotalSeconds);
+
+  if (matchedActivity) {
+    matchedActivity.totalTime = updatedTotalTime;
+    if (sessionSeconds > 0) {
+      matchedActivity.activeDays += 1;
+    }
+  }
+
+  const streakDays = matchedActivity ? matchedActivity.activeDays : sessionSeconds > 0 ? 1 : 0;
+  const displayName = matchedActivity ? matchedActivity.name : activityName;
+  const displayCategory = matchedActivity ? matchedActivity.category : category;
+  const displayIcon = categoryIconMap[displayCategory] || categoryIconMap.Focus;
+  const summaryActivityId = matchedActivity ? matchedActivity.id : null;
+
+  res.render("activity-summary", {
+    pageTitle: "Activity Summary",
+    activityId: summaryActivityId,
+    activityName: displayName,
+    category: displayCategory,
+    activityIcon: displayIcon,
+    previousTotalTime,
+    updatedTotalTime,
+    sessionTime: formatSecondsToTime(sessionSeconds),
+    streakDays,
   });
 };

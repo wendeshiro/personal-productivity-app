@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/activity-summary.css" />
+  </head>
+  <body class="app-page activity-summary-page">
+    <div class="app-shell">
+      <main class="app-screen activity-summary-screen">
+        <section
+          class="activity-summary-content"
+          aria-labelledby="activity-summary-title"
+        >
+          <h1 id="activity-summary-title">Activity Summary</h1>
+
+          <article class="summary-card" aria-label="Activity summary details">
+            <div class="summary-activity">
+              <span class="summary-icon">
+                <img src="<%= activityIcon %>" alt="" />
+              </span>
+              <div class="summary-activity-text">
+                <h2><%= activityName %></h2>
+                <h3><%= category %></h3>
+              </div>
+            </div>
+
+            <div
+              class="summary-total"
+              data-updated-total="<%= updatedTotalTime %>"
+              data-session-time="<%= sessionTime %>"
+            >
+              <p class="label">Total Time</p>
+              <p class="value" id="summary-total-time">
+                <%= previousTotalTime %>
+              </p>
+              <p class="session-time" id="summary-session-time">
+                + <%= sessionTime %>
+              </p>
+            </div>
+
+            <p class="summary-streak">🔥 <%= streakDays %> day streak!</p>
+          </article>
+
+          <h3 class="summary-question">Is this activity completed?</h3>
+
+          <div class="summary-actions" aria-label="Summary actions">
+            <form action="/activities/timer" method="get">
+              <input
+                type="hidden"
+                name="activityId"
+                value="<%= activityId || '' %>"
+              />
+              <input
+                type="hidden"
+                name="activityName"
+                value="<%= activityName %>"
+              />
+              <input type="hidden" name="category" value="<%= category %>" />
+              <button type="submit" class="ongoing-btn">Ongoing</button>
+            </form>
+
+            <form action="/activities/continue" method="get">
+              <button type="submit" class="completed-btn">Completed</button>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (() => {
+        const summaryTotal = document.getElementById("summary-total-time");
+        const sessionTime = document.getElementById("summary-session-time");
+        const summaryNode = document.querySelector(".summary-total");
+
+        if (!summaryTotal || !sessionTime || !summaryNode) {
+          return;
+        }
+
+        const parseTimeToSeconds = (value) => {
+          const parts = String(value)
+            .trim()
+            .split(":")
+            .map((part) => Number(part));
+
+          if (parts.length !== 3 || parts.some((part) => Number.isNaN(part))) {
+            return 0;
+          }
+
+          const [hours, minutes, seconds] = parts;
+          return hours * 3600 + minutes * 60 + seconds;
+        };
+
+        const formatSecondsToTime = (totalSeconds) => {
+          const safeSeconds = Math.max(0, Math.round(totalSeconds));
+          const hours = String(Math.floor(safeSeconds / 3600)).padStart(2, "0");
+          const minutes = String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, "0");
+          const seconds = String(safeSeconds % 60).padStart(2, "0");
+          return `${hours}:${minutes}:${seconds}`;
+        };
+
+        const animateTotalTime = (fromSeconds, toSeconds, durationMs) => {
+          if (fromSeconds === toSeconds) {
+            summaryTotal.textContent = formatSecondsToTime(toSeconds);
+            return;
+          }
+
+          const startTime = performance.now();
+          const delta = toSeconds - fromSeconds;
+
+          const tick = (now) => {
+            const elapsed = Math.min(1, (now - startTime) / durationMs);
+            const eased = 1 - Math.pow(1 - elapsed, 3);
+            const currentValue = fromSeconds + delta * eased;
+
+            summaryTotal.textContent = formatSecondsToTime(currentValue);
+
+            if (elapsed < 1) {
+              requestAnimationFrame(tick);
+            }
+          };
+
+          requestAnimationFrame(tick);
+        };
+
+        const updatedTotal =
+          summaryNode.dataset.updatedTotal || summaryTotal.textContent;
+        const sessionDuration = summaryNode.dataset.sessionTime || "00:00:00";
+        const fromTotalSeconds = parseTimeToSeconds(summaryTotal.textContent);
+        const updatedTotalSeconds = parseTimeToSeconds(updatedTotal);
+
+        if (sessionDuration === "00:00:00") {
+          sessionTime.classList.add("is-hidden");
+          animateTotalTime(fromTotalSeconds, updatedTotalSeconds, 650);
+          return;
+        }
+
+        window.setTimeout(() => {
+          sessionTime.classList.add("is-hidden");
+          animateTotalTime(fromTotalSeconds, updatedTotalSeconds, 900);
+        }, 3000);
+      })();
+    </script>
+  </body>
+</html>

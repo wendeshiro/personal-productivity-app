@@ -1,0 +1,137 @@
+.activity-summary-screen {
+  padding: 32px 24px 36px;
+}
+
+.activity-summary-content h1 {
+  margin: 0 0 40px;
+  text-align: center;
+  font-size: var(--text-h1);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.summary-card {
+  border: 1px solid var(--primary);
+  border-radius: 24px;
+  background: var(--button-light);
+  padding: 24px;
+}
+
+.summary-activity {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.summary-icon {
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-icon img {
+  width: 64px;
+  height: 64px;
+  display: block;
+}
+
+.summary-activity-text h2 {
+  margin: 0 0 4px;
+  font-size: var(--text-h2);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.summary-activity-text h3 {
+  margin: 0;
+  font-size: var(--text-h3);
+  font-weight: 400;
+  color: var(--primary);
+}
+
+.summary-total {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.summary-total .label {
+  margin: 0 0 12px;
+  font-size: var(--text-body);
+  color: var(--primary);
+}
+
+.summary-total .value {
+  margin: 0;
+  font-size: 64px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.summary-total .session-time {
+  margin: 12px 0 0;
+  color: #ff4d13;
+  font-size: var(--text-h2);
+  opacity: 1;
+  min-height: 1.2em;
+  transform: translateY(0);
+  transition:
+    opacity 520ms ease,
+    transform 520ms ease,
+    visibility 0ms linear 520ms;
+}
+
+.summary-total .session-time.is-hidden {
+  opacity: 0;
+  transform: translateY(-36px);
+  visibility: hidden;
+}
+
+.summary-streak {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-h3);
+  color: var(--primary);
+}
+
+.summary-question {
+  margin: 40px 0 20px;
+  text-align: center;
+  font-size: var(--text-h3);
+  font-weight: 400;
+  color: var(--primary);
+}
+
+.summary-actions {
+  display: grid;
+  gap: 20px;
+}
+
+.summary-actions form {
+  margin: 0;
+}
+
+.ongoing-btn,
+.completed-btn {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--primary);
+  padding: 20px 60px;
+  font-size: var(--text-h3);
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.ongoing-btn {
+  background: var(--button-light);
+  color: var(--primary);
+}
+
+.completed-btn {
+  background: var(--button-dark);
+  color: #ffffff;
+}
