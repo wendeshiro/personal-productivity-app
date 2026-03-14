@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/timer.css" />
+  </head>
+  <body class="app-page timer-page">
+    <div class="app-shell">
+      <main class="app-screen timer-screen">
+        <section class="app-back-controls" aria-label="Navigation controls">
+          <a
+            href="/activities/continue"
+            class="app-back-button"
+            aria-label="Back"
+          >
+            <img src="/image/back-button.svg" alt="" width="52" height="52" />
+          </a>
+        </section>
+
+        <section class="timer-content" aria-labelledby="timer-activity-title">
+          <section class="timer-activity-summary" aria-label="Current activity">
+            <span class="timer-category-icon">
+              <img src="<%= activityIcon %>" alt="" />
+            </span>
+            <div class="timer-activity-text">
+              <h1 id="timer-activity-title"><%= activityName %></h1>
+              <p><%= category %></p>
+            </div>
+          </section>
+
+          <section class="timer-clock" aria-label="Timer clock">
+            <p id="timer-display"><%= timerValue %></p>
+          </section>
+
+          <section class="timer-actions" aria-label="Timer actions">
+            <button
+              type="button"
+              id="timer-toggle-btn"
+              class="timer-toggle-btn"
+              aria-pressed="false"
+            >
+              <img id="timer-toggle-icon" src="/image/start.svg" alt="" />
+              <span id="timer-toggle-label">Start</span>
+            </button>
+
+            <form action="/" method="get">
+              <button type="submit" class="timer-stop-btn">Stop</button>
+            </form>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (() => {
+        const timerDisplay = document.getElementById("timer-display");
+        const toggleButton = document.getElementById("timer-toggle-btn");
+        const toggleLabel = document.getElementById("timer-toggle-label");
+        const toggleIcon = document.getElementById("timer-toggle-icon");
+
+        if (!timerDisplay || !toggleButton || !toggleLabel || !toggleIcon) {
+          return;
+        }
+
+        const parseTimerValue = (value) => {
+          const parts = value.split(":").map((part) => Number(part));
+
+          if (parts.length !== 3 || parts.some((part) => Number.isNaN(part))) {
+            return 0;
+          }
+
+          const [hours, minutes, seconds] = parts;
+          return hours * 3600 + minutes * 60 + seconds;
+        };
+
+        const formatTimerValue = (totalSeconds) => {
+          const hours = String(Math.floor(totalSeconds / 3600)).padStart(
+            2,
+            "0",
+          );
+          const minutes = String(
+            Math.floor((totalSeconds % 3600) / 60),
+          ).padStart(2, "0");
+          const seconds = String(totalSeconds % 60).padStart(2, "0");
+
+          return `${hours}:${minutes}:${seconds}`;
+        };
+
+        let elapsedSeconds = parseTimerValue(timerDisplay.textContent.trim());
+        let intervalId = null;
+
+        const setRunning = (isRunning) => {
+          toggleLabel.textContent = isRunning ? "Pause" : "Start";
+          toggleIcon.src = isRunning ? "/image/pause.svg" : "/image/start.svg";
+          toggleButton.setAttribute(
+            "aria-pressed",
+            isRunning ? "true" : "false",
+          );
+
+          if (isRunning) {
+            if (intervalId !== null) {
+              return;
+            }
+
+            intervalId = window.setInterval(() => {
+              elapsedSeconds += 1;
+              timerDisplay.textContent = formatTimerValue(elapsedSeconds);
+            }, 1000);
+            return;
+          }
+
+          if (intervalId !== null) {
+            window.clearInterval(intervalId);
+            intervalId = null;
+          }
+        };
+
+        toggleButton.addEventListener("click", () => {
+          setRunning(intervalId === null);
+        });
+      })();
+    </script>
+  </body>
+</html>

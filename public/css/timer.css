@@ -1,0 +1,130 @@
+.timer-screen {
+  padding: 24px 24px 36px;
+}
+
+.timer-controls {
+  margin-bottom: 40px;
+}
+
+.back-button {
+  display: inline-flex;
+  width: 50px;
+  height: 50px;
+}
+
+.back-button img {
+  display: block;
+  width: 50px;
+  height: 50px;
+}
+
+.timer-content {
+  min-height: calc(100svh - 150px);
+  display: flex;
+  flex-direction: column;
+}
+
+.timer-activity-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.timer-category-icon {
+  width: 96px;
+  height: 96px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-category-icon img {
+  width: 96px;
+  height: 96px;
+  display: block;
+}
+
+.timer-activity-text h1 {
+  margin: 0 0 8px;
+  font-size: var(--text-h1);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.timer-activity-text p {
+  margin: 0;
+  font-size: var(--text-h2);
+  color: var(--primary);
+}
+
+.timer-clock {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-clock::before {
+  content: "";
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 113, 66, 0.5) 0%,
+    rgba(255, 113, 66, 0) 68%
+  );
+}
+
+#timer-display {
+  position: relative;
+  margin: 0;
+  font-size: 64px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.timer-actions {
+  display: grid;
+  gap: 16px;
+  margin-top: 64px;
+}
+
+.timer-actions form {
+  margin: 0;
+}
+
+.timer-toggle-btn,
+.timer-stop-btn {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--primary);
+}
+
+.timer-toggle-btn {
+  height: 96px;
+  background: var(--button-dark);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: var(--text-h2);
+}
+
+.timer-toggle-btn img {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.timer-stop-btn {
+  height: 80px;
+  background: var(--button-light);
+  color: var(--primary);
+  font-size: var(--text-h2);
+}
