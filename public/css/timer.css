@@ -27,34 +27,35 @@
 .timer-activity-summary {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 48px;
 }
 
 .timer-category-icon {
-  width: 96px;
-  height: 96px;
+  width: 64px;
+  height: 64px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .timer-category-icon img {
-  width: 96px;
-  height: 96px;
+  width: 100%;
+  height: 100%;
   display: block;
 }
 
-.timer-activity-text h1 {
-  margin: 0 0 8px;
-  font-size: var(--text-h1);
+.timer-activity-text h2 {
+  margin: 0 0 4px;
+  font-size: var(--text-h2);
   color: var(--primary);
   font-weight: 500;
 }
 
 .timer-activity-text p {
   margin: 0;
-  font-size: var(--text-h2);
+  font-size: var(--text-h3);
   color: var(--primary);
 }
 
@@ -103,28 +104,36 @@
   width: 100%;
   border-radius: 16px;
   border: 1px solid var(--primary);
+  padding: 20px 60px;
+  font-size: var(--text-h3);
+  line-height: 1.1;
+  cursor: pointer;
 }
 
 .timer-toggle-btn {
-  height: 96px;
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--primary);
+  padding: 40px 60px;
+  font-size: var(--text-h3);
+  line-height: 1.1;
+  cursor: pointer;
   background: var(--button-dark);
   color: #ffffff;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  font-size: var(--text-h2);
 }
 
-.timer-toggle-btn img {
-  width: 28px;
-  height: 28px;
+.timer-toggle-icon {
+  width: 24px;
+  height: 24px;
   display: block;
 }
 
 .timer-stop-btn {
-  height: 80px;
   background: var(--button-light);
   color: var(--primary);
-  font-size: var(--text-h2);
+  font-size: var(--text-h3);
 }
