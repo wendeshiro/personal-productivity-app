@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/new-activity.css" />
+  </head>
+  <body class="app-page new-activity-page">
+    <div class="app-shell">
+      <main class="app-screen new-activity-screen">
+        <section class="app-back-controls" aria-label="Navigation controls">
+          <a href="/" class="app-back-button" aria-label="Back">
+            <img src="/image/back-button.svg" alt="" width="52" height="52" />
+          </a>
+        </section>
+
+        <section class="new-activity-content" aria-labelledby="create-activity-title">
+          <h1 id="create-activity-title">Create a New Activity</h1>
+
+          <div class="category-icon-area">
+            <div class="category-icon-wrap" id="category-icon-wrap">
+              <img id="category-icon-image" src="/image/focus-fill.svg" alt="Focus category icon" />
+            </div>
+          </div>
+
+          <form action="/activities" method="post" class="new-activity-form">
+            <div class="form-field">
+              <label class="visually-hidden" for="activity-name">Activity Name</label>
+              <input
+                id="activity-name"
+                name="activityName"
+                type="text"
+                placeholder="Activity Name"
+                required
+              />
+            </div>
+
+            <div class="form-field select-field">
+              <label class="visually-hidden" for="activity-category">Category</label>
+              <select id="activity-category" name="category" required>
+                <% categories.forEach((category, index) => { %>
+                  <option
+                    value="<%= category.name %>"
+                    data-icon="<%= category.icon %>"
+                    <%= index === 0 ? "selected" : "" %>
+                  >
+                    <%= category.name %>
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label class="visually-hidden" for="activity-notes">Notes</label>
+              <textarea id="activity-notes" name="notes" placeholder="Notes"></textarea>
+            </div>
+
+            <%- include("partials/button", {
+              label: "Create",
+              className: "create-activity-btn",
+              type: "submit",
+            }) %>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (() => {
+        const categorySelect = document.getElementById("activity-category");
+        const iconWrap = document.getElementById("category-icon-wrap");
+        const iconImage = document.getElementById("category-icon-image");
+
+        if (!categorySelect || !iconWrap || !iconImage) {
+          return;
+        }
+
+        const updateCategoryIcon = () => {
+          const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+          const icon = selectedOption.dataset.icon;
+          const label = selectedOption.value;
+
+          if (icon) {
+            iconImage.src = icon;
+          }
+
+          iconImage.alt = `${label} category icon`;
+        };
+
+        categorySelect.addEventListener("change", updateCategoryIcon);
+        updateCategoryIcon();
+      })();
+    </script>
+  </body>
+</html>
