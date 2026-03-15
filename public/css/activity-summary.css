@@ -135,3 +135,50 @@
   background: var(--button-dark);
   color: #ffffff;
 }
+
+body.is-popup-open {
+  overflow: hidden;
+}
+
+.summary-popup-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.summary-popup-overlay.is-hidden {
+  display: none;
+}
+
+.summary-popup {
+  width: min(100%, 420px);
+  background: #ffffff;
+  border: 1px solid var(--primary);
+  border-radius: 20px;
+  padding: 28px 24px 24px;
+  text-align: center;
+}
+
+.summary-popup-message {
+  margin: 0 0 20px;
+  font-size: var(--text-body);
+  color: var(--primary);
+}
+
+.summary-popup-home-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 64px;
+  border: 1px solid var(--primary);
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--primary);
+  font-size: var(--text-h3);
+  text-decoration: none;
+}

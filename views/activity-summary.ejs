@@ -47,27 +47,40 @@
           <h3 class="summary-question">Is this activity completed?</h3>
 
           <div class="summary-actions" aria-label="Summary actions">
-            <form action="/activities/timer" method="get">
-              <input
-                type="hidden"
-                name="activityId"
-                value="<%= activityId || '' %>"
-              />
-              <input
-                type="hidden"
-                name="activityName"
-                value="<%= activityName %>"
-              />
-              <input type="hidden" name="category" value="<%= category %>" />
-              <button type="submit" class="ongoing-btn">Ongoing</button>
-            </form>
+            <button
+              type="button"
+              class="ongoing-btn"
+              id="ongoing-btn"
+              aria-haspopup="dialog"
+              aria-controls="ongoing-saved-popup"
+            >
+              Save to Activity List
+            </button>
 
             <form action="/activities/continue" method="get">
-              <button type="submit" class="completed-btn">Completed</button>
+              <button type="submit" class="completed-btn">
+                Mark as Completed
+              </button>
             </form>
           </div>
         </section>
       </main>
+
+      <div
+        class="summary-popup-overlay is-hidden"
+        id="ongoing-saved-popup"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ongoing-saved-message"
+      >
+        <div class="summary-popup">
+          <p class="summary-popup-message" id="ongoing-saved-message">
+            The activity has been saved to the list. <br />
+            You may continue this activity later through the home screen.
+          </p>
+          <a class="summary-popup-home-btn" href="/">Back to Home</a>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -75,6 +88,8 @@
         const summaryTotal = document.getElementById("summary-total-time");
         const sessionTime = document.getElementById("summary-session-time");
         const summaryNode = document.querySelector(".summary-total");
+        const ongoingButton = document.getElementById("ongoing-btn");
+        const savedPopup = document.getElementById("ongoing-saved-popup");
 
         if (!summaryTotal || !sessionTime || !summaryNode) {
           return;
@@ -97,7 +112,9 @@
         const formatSecondsToTime = (totalSeconds) => {
           const safeSeconds = Math.max(0, Math.round(totalSeconds));
           const hours = String(Math.floor(safeSeconds / 3600)).padStart(2, "0");
-          const minutes = String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, "0");
+          const minutes = String(
+            Math.floor((safeSeconds % 3600) / 60),
+          ).padStart(2, "0");
           const seconds = String(safeSeconds % 60).padStart(2, "0");
           return `${hours}:${minutes}:${seconds}`;
         };
@@ -135,13 +152,34 @@
         if (sessionDuration === "00:00:00") {
           sessionTime.classList.add("is-hidden");
           animateTotalTime(fromTotalSeconds, updatedTotalSeconds, 650);
+        } else {
+          window.setTimeout(() => {
+            sessionTime.classList.add("is-hidden");
+            animateTotalTime(fromTotalSeconds, updatedTotalSeconds, 900);
+          }, 3000);
+        }
+
+        if (!ongoingButton || !savedPopup) {
           return;
         }
 
-        window.setTimeout(() => {
-          sessionTime.classList.add("is-hidden");
-          animateTotalTime(fromTotalSeconds, updatedTotalSeconds, 900);
-        }, 3000);
+        ongoingButton.addEventListener("click", () => {
+          savedPopup.classList.remove("is-hidden");
+          document.body.classList.add("is-popup-open");
+        });
+
+        window.addEventListener("keydown", (event) => {
+          if (event.key !== "Escape") {
+            return;
+          }
+
+          if (savedPopup.classList.contains("is-hidden")) {
+            return;
+          }
+
+          savedPopup.classList.add("is-hidden");
+          document.body.classList.remove("is-popup-open");
+        });
       })();
     </script>
   </body>
