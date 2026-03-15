@@ -31,6 +31,11 @@
               class="summary-total"
               data-updated-total="<%= updatedTotalTime %>"
               data-session-time="<%= sessionTime %>"
+              data-activity-id="<%= activityId || '' %>"
+              data-activity-name="<%= activityName %>"
+              data-activity-category="<%= category %>"
+              data-activity-days="<%= streakDays %>"
+              data-activity-total-time="<%= updatedTotalTime %>"
             >
               <p class="label">Total Time</p>
               <p class="value" id="summary-total-time">
@@ -52,23 +57,27 @@
               class="ongoing-btn"
               id="ongoing-btn"
               aria-haspopup="dialog"
-              aria-controls="ongoing-saved-popup"
+              aria-controls="ongoing-popup"
             >
               Save to Activity List
             </button>
 
-            <form action="/activities/continue" method="get">
-              <button type="submit" class="completed-btn">
-                Mark as Completed
-              </button>
-            </form>
+            <button
+              type="button"
+              class="completed-btn"
+              id="completed-btn"
+              aria-haspopup="dialog"
+              aria-controls="completed-popup"
+            >
+              Mark as Completed
+            </button>
           </div>
         </section>
       </main>
 
       <div
         class="summary-popup-overlay is-hidden"
-        id="ongoing-saved-popup"
+        id="ongoing-popup"
         role="dialog"
         aria-modal="true"
         aria-labelledby="ongoing-saved-message"
@@ -81,6 +90,26 @@
           <a class="summary-popup-home-btn" href="/">Back to Home</a>
         </div>
       </div>
+
+      <div
+        class="summary-popup-overlay is-hidden"
+        id="completed-popup"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="completed-message"
+      >
+        <div class="summary-popup">
+          <p class="summary-popup-message" id="completed-message">
+            The activity has been removed from the list.
+          </p>
+          <div class="summary-popup-options">
+            <button type="button" class="summary-popup-undo-btn" id="undo-btn">
+              Undo
+            </button>
+            <a class="summary-popup-home-btn" href="/">Back to Home</a>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -89,11 +118,25 @@
         const sessionTime = document.getElementById("summary-session-time");
         const summaryNode = document.querySelector(".summary-total");
         const ongoingButton = document.getElementById("ongoing-btn");
-        const savedPopup = document.getElementById("ongoing-saved-popup");
+        const ongoingPopup = document.getElementById("ongoing-popup");
+        const completedButton = document.getElementById("completed-btn");
+        const completedPopup = document.getElementById("completed-popup");
+        const undoButton = document.getElementById("undo-btn");
+        let removedActivityPayload = null;
 
         if (!summaryTotal || !sessionTime || !summaryNode) {
           return;
         }
+
+        const parsedActivityId = Number(summaryNode.dataset.activityId);
+        const parsedActiveDays = Number(summaryNode.dataset.activityDays);
+        const summaryActivity = {
+          id: Number.isFinite(parsedActivityId) ? parsedActivityId : null,
+          name: summaryNode.dataset.activityName || "",
+          category: summaryNode.dataset.activityCategory || "",
+          activeDays: Number.isFinite(parsedActiveDays) ? parsedActiveDays : 0,
+          totalTime: summaryNode.dataset.activityTotalTime || "00:00:00",
+        };
 
         const parseTimeToSeconds = (value) => {
           const parts = String(value)
@@ -159,26 +202,111 @@
           }, 3000);
         }
 
-        if (!ongoingButton || !savedPopup) {
+        if (
+          !ongoingButton ||
+          !ongoingPopup ||
+          !completedButton ||
+          !completedPopup
+        ) {
           return;
         }
 
         ongoingButton.addEventListener("click", () => {
-          savedPopup.classList.remove("is-hidden");
+          ongoingPopup.classList.remove("is-hidden");
           document.body.classList.add("is-popup-open");
         });
+
+        const openPopup = (popupNode) => {
+          popupNode.classList.remove("is-hidden");
+          document.body.classList.add("is-popup-open");
+        };
+
+        const closePopup = (popupNode) => {
+          popupNode.classList.add("is-hidden");
+
+          if (
+            ongoingPopup.classList.contains("is-hidden") &&
+            completedPopup.classList.contains("is-hidden")
+          ) {
+            document.body.classList.remove("is-popup-open");
+          }
+        };
+
+        completedButton.addEventListener("click", async () => {
+          if (
+            typeof summaryActivity.id !== "number" ||
+            Number.isNaN(summaryActivity.id)
+          ) {
+            openPopup(completedPopup);
+            return;
+          }
+
+          try {
+            const response = await fetch(
+              `/activities/${summaryActivity.id}/complete`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              },
+            );
+
+            if (!response.ok) {
+              return;
+            }
+
+            const result = await response.json();
+            removedActivityPayload = {
+              ...result.activity,
+              removedIndex: result.removedIndex,
+            };
+            openPopup(completedPopup);
+          } catch (_error) {
+            // Ignore network errors and keep user on summary screen.
+          }
+        });
+
+        if (undoButton) {
+          undoButton.addEventListener("click", async () => {
+            if (!removedActivityPayload) {
+              closePopup(completedPopup);
+              return;
+            }
+
+            try {
+              const response = await fetch("/activities/restore", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(removedActivityPayload),
+              });
+
+              if (!response.ok) {
+                return;
+              }
+
+              removedActivityPayload = null;
+              closePopup(completedPopup);
+            } catch (_error) {
+              // Ignore network errors and keep current popup state.
+            }
+          });
+        }
 
         window.addEventListener("keydown", (event) => {
           if (event.key !== "Escape") {
             return;
           }
 
-          if (savedPopup.classList.contains("is-hidden")) {
-            return;
+          if (!ongoingPopup.classList.contains("is-hidden")) {
+            closePopup(ongoingPopup);
           }
 
-          savedPopup.classList.add("is-hidden");
-          document.body.classList.remove("is-popup-open");
+          if (!completedPopup.classList.contains("is-hidden")) {
+            closePopup(completedPopup);
+          }
         });
       })();
     </script>

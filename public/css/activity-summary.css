@@ -169,7 +169,13 @@ body.is-popup-open {
   color: var(--primary);
 }
 
-.summary-popup-home-btn {
+.summary-popup-options {
+  display: grid;
+  gap: 12px;
+}
+
+.summary-popup-home-btn,
+.summary-popup-undo-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -177,8 +183,14 @@ body.is-popup-open {
   min-height: 64px;
   border: 1px solid var(--primary);
   border-radius: 16px;
-  background: #ffffff;
-  color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
   font-size: var(--text-h3);
   text-decoration: none;
+  cursor: pointer;
+}
+
+.summary-popup-undo-btn {
+  background: #ffffff;
+  color: var(--primary);
 }

@@ -157,6 +157,73 @@ export const deleteActivity = (req, res) => {
   res.redirect("/activities/continue");
 };
 
+export const completeActivity = (req, res) => {
+  const activityId = Number(req.params.id);
+
+  if (Number.isNaN(activityId)) {
+    res.status(400).json({ message: "Invalid activity ID." });
+    return;
+  }
+
+  const activityIndex = activities.findIndex((activity) => activity.id === activityId);
+  if (activityIndex === -1) {
+    res.status(404).json({ message: "Activity not found." });
+    return;
+  }
+
+  const [activity] = activities.splice(activityIndex, 1);
+
+  res.json({
+    activity,
+    removedIndex: activityIndex,
+  });
+};
+
+export const restoreActivity = (req, res) => {
+  const activityId = Number(req.body.id);
+  const removedIndex = Number(req.body.removedIndex);
+
+  if (Number.isNaN(activityId)) {
+    res.status(400).json({ message: "Invalid activity ID." });
+    return;
+  }
+
+  if (activities.some((activity) => activity.id === activityId)) {
+    res.json({ restored: false, message: "Activity already exists." });
+    return;
+  }
+
+  const activityName =
+    typeof req.body.name === "string" && req.body.name.trim()
+      ? req.body.name.trim()
+      : "Activity Name";
+  const category =
+    typeof req.body.category === "string" && req.body.category.trim()
+      ? req.body.category.trim()
+      : "Category";
+  const activeDays =
+    Number.isInteger(req.body.activeDays) && req.body.activeDays >= 0 ? req.body.activeDays : 0;
+  const totalTime = formatSecondsToTime(parseTimeToSeconds(req.body.totalTime));
+
+  const restoredActivity = {
+    id: activityId,
+    name: activityName,
+    category,
+    activeDays,
+    totalTime,
+  };
+
+  const safeIndex =
+    Number.isInteger(removedIndex) && removedIndex >= 0 && removedIndex <= activities.length
+      ? removedIndex
+      : 0;
+
+  activities.splice(safeIndex, 0, restoredActivity);
+  nextActivityId = Math.max(nextActivityId, activityId + 1);
+
+  res.json({ restored: true });
+};
+
 export const renderTimerScreen = (req, res) => {
   const activityId = Number(req.query.activityId);
   const activityName =
