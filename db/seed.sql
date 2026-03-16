@@ -28,71 +28,87 @@ SELECT
 
 /*
 DEMO ACTIVITIES
-Date Range: 2026-03-02 → 2026-03-08
+Date Range: 2026-03-09 → 2026-03-15
 */
 INSERT INTO
-  activities (title, category_id, note, start_time, end_time)
+  activities (
+    title,
+    category_id,
+    note,
+    start_time,
+    end_time,
+    is_completed
+  )
 VALUES
+  (
+    'Plan weekly priorities',
+    3,
+    'Sprint planning and task breakdown',
+    '2026-03-09 09:00:00-07',
+    '2026-03-09 10:00:00-07',
+    TRUE
+  ),
+  (
+    'Deep work on API module',
+    2,
+    NULL,
+    '2026-03-10 10:30:00-07',
+    '2026-03-10 12:30:00-07',
+    TRUE
+  ),
+  (
+    'Team sync meeting',
+    4,
+    NULL,
+    '2026-03-10 14:00:00-07',
+    '2026-03-10 14:30:00-07',
+    TRUE
+  ),
   (
     'Study SQL basics',
     5,
     'PostgreSQL tutorial',
-    '2026-03-02 15:00:00-08',
-    '2026-03-02 16:30:00-08'
+    '2026-03-11 15:00:00-07',
+    '2026-03-11 16:30:00-07',
+    TRUE
   ),
   (
-    'Team meeting',
-    4,
-    NULL,
-    '2026-03-03 11:30:00-08',
-    '2026-03-03 12:00:00-08'
+    'Design UI improvements',
+    6,
+    'Refine dashboard spacing and typography',
+    '2026-03-12 11:00:00-07',
+    '2026-03-12 12:30:00-07',
+    TRUE
   ),
   (
-    'Database learning',
-    5,
-    'Indexes and joins',
-    '2026-03-03 14:00:00-08',
-    '2026-03-03 15:30:00-08'
-  ),
-  (
-    'Watch system design lecture',
-    5,
-    NULL,
-    '2026-03-05 09:00:00-08',
-    '2026-03-05 10:30:00-08'
+    'Life admin errands',
+    7,
+    'Bank and utility follow-up',
+    '2026-03-13 13:00:00-07',
+    '2026-03-13 13:45:00-07',
+    TRUE
   ),
   (
     'Client communication',
     4,
-    'Project update',
-    '2026-03-06 13:30:00-08',
-    '2026-03-06 14:00:00-08'
+    'Project update and requirements confirmation',
+    '2026-03-14 10:00:00-07',
+    '2026-03-14 10:40:00-07',
+    TRUE
   ),
   (
     'Read tech article',
     5,
     NULL,
-    '2026-03-06 16:00:00-08',
-    '2026-03-06 17:00:00-08'
-  ),
-  (
-    'Design UI improvements',
-    6,
-    NULL,
-    '2026-03-07 11:00:00-08',
-    '2026-03-07 12:30:00-08'
+    '2026-03-14 16:00:00-07',
+    '2026-03-14 16:50:00-07',
+    TRUE
   ),
   (
     'Build dashboard page',
     2,
-    NULL,
-    '2026-03-07 14:00:00-08',
-    '2026-03-07 16:00:00-08'
-  ),
-  (
-    'Study data visualization',
-    5,
-    NULL,
-    '2026-03-08 13:00:00-07',
-    '2026-03-08 14:30:00-07'
+    'Finalize charts and summary cards',
+    '2026-03-15 14:00:00-07',
+    '2026-03-15 16:00:00-07',
+    TRUE
   );
