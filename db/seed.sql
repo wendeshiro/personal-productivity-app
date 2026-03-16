@@ -112,3 +112,58 @@ VALUES
     '2026-03-15 16:00:00-07',
     TRUE
   );
+
+/*
+TODAY ACTIVE ACTIVITIES
+Date: 2026-03-16
+*/
+INSERT INTO
+  activities (
+    title,
+    category_id,
+    note,
+    start_time,
+    end_time,
+    is_completed
+  )
+VALUES
+  (
+    'Morning focus block',
+    2,
+    'Ship controller improvements',
+    '2026-03-16 09:00:00-07',
+    '2026-03-16 10:30:00-07',
+    FALSE
+  ),
+  (
+    'Plan next sprint tasks',
+    3,
+    NULL,
+    '2026-03-16 10:45:00-07',
+    '2026-03-16 11:20:00-07',
+    FALSE
+  ),
+  (
+    'Client follow-up messages',
+    4,
+    'Clarify API delivery timeline',
+    '2026-03-16 13:00:00-07',
+    '2026-03-16 13:40:00-07',
+    FALSE
+  ),
+  (
+    'Read architecture notes',
+    5,
+    NULL,
+    '2026-03-16 14:00:00-07',
+    '2026-03-16 15:00:00-07',
+    FALSE
+  ),
+  (
+    'UI sketch iteration',
+    6,
+    'Try alternate home layout ideas',
+    '2026-03-16 15:30:00-07',
+    '2026-03-16 16:15:00-07',
+    FALSE
+  );
