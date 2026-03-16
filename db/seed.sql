@@ -165,7 +165,7 @@ VALUES
     NULL,
     '2026-03-16 18:00:00-07',
     '2026-03-16 19:00:00-07',
-    TRUE
+    FALSE
   ),
   (
     'UI sketch iteration',
