@@ -49,6 +49,24 @@ const categoryIconMap = {
   Communication: "/image/comm-fill.svg",
 };
 
+const categoryToneMap = {
+  Focus: "focus",
+  Planning: "planning",
+  "Life Admin": "life-admin",
+  Learning: "learning",
+  Creative: "creative",
+  Communication: "communication",
+};
+
+const homeCategoryOrder = [
+  "Focus",
+  "Planning",
+  "Life Admin",
+  "Learning",
+  "Creative",
+  "Communication",
+];
+
 const parseTimeToSeconds = (timeValue) => {
   const parts = String(timeValue)
     .split(":")
@@ -71,6 +89,92 @@ const formatSecondsToTime = (totalSeconds) => {
   );
   const seconds = String(safeSeconds % 60).padStart(2, "0");
   return `${hours}:${minutes}:${seconds}`;
+};
+
+const buildDonutGradient = (categories) => {
+  const segments = [];
+  let accumulatedDegrees = 0;
+
+  categories.forEach((category) => {
+    const percentage = Number(category.percentage) || 0;
+
+    if (percentage <= 0) {
+      return;
+    }
+
+    const start = accumulatedDegrees;
+    const end = Math.min(360, start + (percentage / 100) * 360);
+
+    segments.push(`var(--${category.tone}) ${start}deg ${end}deg`);
+    accumulatedDegrees = end;
+  });
+
+  if (segments.length === 0) {
+    return "var(--focus) 0deg 360deg";
+  }
+
+  if (accumulatedDegrees < 360) {
+    const lastIndex = segments.length - 1;
+    segments[lastIndex] = segments[lastIndex].replace(
+      /\d+(?:\.\d+)?deg$/,
+      "360deg",
+    );
+  }
+
+  return segments.join(", ");
+};
+
+const fetchTodayInsight = async () => {
+  const { rows } = await query(
+    `
+      SELECT
+        c.name,
+        COALESCE(SUM(a.duration_seconds), 0)::INTEGER AS "totalSeconds"
+      FROM categories c
+      LEFT JOIN activities a
+        ON a.category_id = c.id
+       AND a.start_time >= CURRENT_DATE
+       AND a.start_time < CURRENT_DATE + INTERVAL '1 day'
+       AND a.end_time IS NOT NULL
+       AND NOT a.is_completed
+      WHERE c.name <> 'Uncategorized'
+      GROUP BY c.id, c.name
+      ORDER BY c.id
+    `,
+  );
+
+  const totalsByCategory = new Map(
+    rows.map((row) => [row.name, Number(row.totalSeconds) || 0]),
+  );
+
+  const categories = homeCategoryOrder.map((name) => ({
+    name,
+    tone: categoryToneMap[name],
+    totalSeconds: totalsByCategory.get(name) || 0,
+  }));
+
+  const totalSecondsToday = categories.reduce(
+    (sum, category) => sum + category.totalSeconds,
+    0,
+  );
+
+  const categoriesWithStats = categories.map((category) => {
+    const percentage =
+      totalSecondsToday > 0
+        ? Number(((category.totalSeconds / totalSecondsToday) * 100).toFixed(1))
+        : 0;
+
+    return {
+      ...category,
+      minutes: Math.round(category.totalSeconds / 60),
+      percentage,
+    };
+  });
+
+  return {
+    categories: categoriesWithStats,
+    donutGradient: buildDonutGradient(categoriesWithStats),
+  };
 };
 
 const mapActivityRow = (row) => ({
@@ -204,20 +308,18 @@ const resolveCategory = async (categoryName) => {
   return { id: 1, name: "Uncategorized" };
 };
 
-export const renderHome = (_req, res) => {
-  const categories = [
-    { name: "Focus", tone: "focus" },
-    { name: "Planning", tone: "planning" },
-    { name: "Life Admin", tone: "life-admin" },
-    { name: "Learning", tone: "learning" },
-    { name: "Creative", tone: "creative" },
-    { name: "Communication", tone: "communication" },
-  ];
+export const renderHome = async (_req, res) => {
+  try {
+    const { categories, donutGradient } = await fetchTodayInsight();
 
-  res.render("index", {
-    pageTitle: "Home",
-    categories,
-  });
+    res.render("index", {
+      pageTitle: "Home",
+      categories,
+      donutGradient,
+    });
+  } catch {
+    res.status(500).send("Failed to load home page.");
+  }
 };
 
 export const renderContinueActivity = async (_req, res) => {
