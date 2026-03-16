@@ -81,7 +81,26 @@ const mapActivityRow = (row) => ({
   totalTime: formatSecondsToTime(row.totalSeconds),
 });
 
+let completionColumnEnsured = false;
+
+const ensureCompletionColumn = async () => {
+  if (completionColumnEnsured) {
+    return;
+  }
+
+  await query(
+    `
+      ALTER TABLE activities
+      ADD COLUMN IF NOT EXISTS is_completed BOOLEAN NOT NULL DEFAULT FALSE
+    `,
+  );
+
+  completionColumnEnsured = true;
+};
+
 const fetchActivityGroups = async () => {
+  await ensureCompletionColumn();
+
   const { rows } = await query(
     `
       SELECT
@@ -93,6 +112,7 @@ const fetchActivityGroups = async () => {
       FROM activities a
       INNER JOIN categories c ON c.id = a.category_id
       GROUP BY a.title, c.name
+      HAVING BOOL_OR(NOT a.is_completed)
       ORDER BY MAX(a.start_time) DESC, MIN(a.id) DESC
     `,
   );
@@ -273,6 +293,8 @@ export const deleteActivity = async (req, res) => {
   }
 
   try {
+    await ensureCompletionColumn();
+
     const target = await query(
       `
         SELECT title, category_id
@@ -292,7 +314,8 @@ export const deleteActivity = async (req, res) => {
 
     await query(
       `
-        DELETE FROM activities
+        UPDATE activities
+        SET is_completed = TRUE
         WHERE title = $1 AND category_id = $2
       `,
       [title, categoryId],
@@ -313,41 +336,42 @@ export const completeActivity = async (req, res) => {
   }
 
   try {
-    const deletedResult = await query(
+    await ensureCompletionColumn();
+
+    const targetResult = await query(
       `
-        WITH target AS (
-          SELECT title, category_id
-          FROM activities
-          WHERE id = $1
-          LIMIT 1
-        ),
-        deleted AS (
-          DELETE FROM activities a
-          USING target t
-          WHERE a.title = t.title AND a.category_id = t.category_id
-          RETURNING a.id, a.title, a.category_id, a.note, a.start_time, a.end_time
-        )
-        SELECT d.id, d.title, d.category_id, c.name AS category_name, d.note, d.start_time, d.end_time
-        FROM deleted d
-        INNER JOIN categories c ON c.id = d.category_id
-        ORDER BY d.id
+        SELECT a.id, a.title, a.category_id, c.name AS category_name
+        FROM activities a
+        INNER JOIN categories c ON c.id = a.category_id
+        WHERE a.id = $1
+        LIMIT 1
       `,
       [activityId],
     );
 
-    if (deletedResult.rows.length === 0) {
+    if (targetResult.rows.length === 0) {
       res.status(404).json({ message: "Activity not found." });
       return;
     }
 
-    const firstRow = deletedResult.rows[0];
+    const firstRow = targetResult.rows[0];
+
+    await query(
+      `
+        UPDATE activities
+        SET is_completed = TRUE
+        WHERE title = $1 AND category_id = $2
+      `,
+      [firstRow.title, firstRow.category_id],
+    );
 
     res.json({
       activity: {
         id: Number(firstRow.id),
         name: firstRow.title,
         category: firstRow.category_name,
-        removedRows: deletedResult.rows,
+        title: firstRow.title,
+        categoryId: Number(firstRow.category_id),
       },
       removedIndex: 0,
     });
@@ -357,27 +381,73 @@ export const completeActivity = async (req, res) => {
 };
 
 export const restoreActivity = async (req, res) => {
+  const activityId = Number(req.body.id);
+  const activityTitle =
+    typeof req.body.title === "string" && req.body.title.trim()
+      ? req.body.title.trim()
+      : typeof req.body.name === "string" && req.body.name.trim()
+        ? req.body.name.trim()
+        : "";
+  const categoryId = Number(req.body.categoryId);
   const removedRows = Array.isArray(req.body.removedRows)
     ? req.body.removedRows
     : [];
 
-  if (removedRows.length === 0) {
-    res.status(400).json({ message: "No removed rows to restore." });
+  if (!activityTitle && Number.isNaN(activityId) && removedRows.length === 0) {
+    res.status(400).json({ message: "No activity payload to restore." });
     return;
   }
 
   try {
-    const restorePromises = removedRows.map((row) =>
-      query(
-        `
-          INSERT INTO activities (title, category_id, note, start_time, end_time)
-          VALUES ($1, $2, $3, $4, $5)
-        `,
-        [row.title, row.category_id, row.note, row.start_time, row.end_time],
-      ),
-    );
+    await ensureCompletionColumn();
 
-    await Promise.all(restorePromises);
+    let resolvedTitle = activityTitle;
+    let resolvedCategoryId = categoryId;
+
+    if (
+      (!resolvedTitle || Number.isNaN(resolvedCategoryId)) &&
+      removedRows.length > 0
+    ) {
+      resolvedTitle =
+        removedRows[0].title || removedRows[0].name || resolvedTitle;
+      resolvedCategoryId = Number(
+        removedRows[0].categoryId ?? removedRows[0].category_id,
+      );
+    }
+
+    if (
+      (!resolvedTitle || Number.isNaN(resolvedCategoryId)) &&
+      !Number.isNaN(activityId)
+    ) {
+      const targetResult = await query(
+        `
+          SELECT title, category_id
+          FROM activities
+          WHERE id = $1
+          LIMIT 1
+        `,
+        [activityId],
+      );
+
+      if (targetResult.rows.length > 0) {
+        resolvedTitle = targetResult.rows[0].title;
+        resolvedCategoryId = Number(targetResult.rows[0].category_id);
+      }
+    }
+
+    if (!resolvedTitle || Number.isNaN(resolvedCategoryId)) {
+      res.status(404).json({ restored: false, message: "Activity not found." });
+      return;
+    }
+
+    await query(
+      `
+        UPDATE activities
+        SET is_completed = FALSE
+        WHERE title = $1 AND category_id = $2
+      `,
+      [resolvedTitle, resolvedCategoryId],
+    );
 
     res.json({ restored: true });
   } catch {
@@ -496,6 +566,17 @@ export const renderActivitySummary = async (req, res) => {
           startTime.toISOString(),
           endTime.toISOString(),
         ],
+      );
+
+      await ensureCompletionColumn();
+
+      await query(
+        `
+          UPDATE activities
+          SET is_completed = FALSE
+          WHERE title = $1 AND category_id = $2
+        `,
+        [displayName, resolvedCategory.id],
       );
 
       matchedActivity = await fetchActivityGroupByNameCategory(
