@@ -338,19 +338,36 @@ export const renderContinueActivity = async (_req, res) => {
   }
 };
 
-export const renderNewActivity = (_req, res) => {
-  const categories = [
-    { name: "Focus", icon: "/image/focus-fill.svg" },
-    { name: "Planning", icon: "/image/plan-fill.svg" },
-    { name: "Life Admin", icon: "/image/life-fill.svg" },
-    { name: "Learning", icon: "/image/learn-fill.svg" },
-    { name: "Creative", icon: "/image/creative-fill.svg" },
-  ];
+export const renderNewActivity = async (_req, res) => {
+  try {
+    const { rows } = await query(
+      `
+        SELECT name
+        FROM categories
+        WHERE name <> 'Uncategorized'
+        ORDER BY id
+      `,
+    );
 
-  res.render("new-activity", {
-    pageTitle: "New Activity",
-    categories,
-  });
+    const categories = rows
+      .map((row) => ({
+        name: row.name,
+        icon: categoryIconMap[row.name] || categoryIconMap.Focus,
+      }))
+      .filter((category) => Boolean(category.name));
+
+    const fallbackCategories = homeCategoryOrder.map((name) => ({
+      name,
+      icon: categoryIconMap[name] || categoryIconMap.Focus,
+    }));
+
+    res.render("new-activity", {
+      pageTitle: "New Activity",
+      categories: categories.length > 0 ? categories : fallbackCategories,
+    });
+  } catch {
+    res.status(500).send("Failed to load new activity screen.");
+  }
 };
 
 export const createActivity = async (req, res) => {
