@@ -3,13 +3,25 @@
 A personal productivity web app to track focused work sessions, categorize time usage, and generate daily/weekly insights.
 
 ## Table of Contents
-- [1. Run Locally](#1-run-locally)
-- [2. Project Structure](#2-project-structure)
-- [3. Tech Stack](#3-tech-stack)
-- [4. Developer Plugins + Commit Naming](#4-developer-plugins--commit-naming)
-- [5. Branch Naming Convention](#5-branch-naming-convention)
-- [6. Database Schema Diagram](#6-database-schema-diagram)
-- [7. Architecture Overview](#7-architecture-overview)
+- [Personal Productivity App](#personal-productivity-app)
+  - [Table of Contents](#table-of-contents)
+  - [1. Run Locally](#1-run-locally)
+    - [Setup](#setup)
+    - [Useful commands](#useful-commands)
+  - [2. Route Map](#2-route-map)
+    - [View routes](#view-routes)
+    - [Action routes](#action-routes)
+  - [3. Project Structure](#3-project-structure)
+    - [Folder purposes](#folder-purposes)
+    - [File purposes](#file-purposes)
+  - [4. Tech Stack](#4-tech-stack)
+  - [5. Developer Plugins + Commit Naming](#5-developer-plugins--commit-naming)
+    - [Recommended editor plugins](#recommended-editor-plugins)
+    - [Commit naming convention (Conventional Commits)](#commit-naming-convention-conventional-commits)
+  - [6. Branch Naming Convention](#6-branch-naming-convention)
+  - [7. Database Schema Diagram](#7-database-schema-diagram)
+  - [8. Architecture Overview](#8-architecture-overview)
+    - [Notes](#notes)
 
 ## 1. Run Locally
 
@@ -18,19 +30,21 @@ A personal productivity web app to track focused work sessions, categorize time 
 # 1) Install dependencies
 npm install
 
-# 2) Create a PostgreSQL database (example name)
-createdb personal_productivity_app
+# 2) Create PostgreSQL database
+createdb -U <username> personal_productivity_app
 
 # 3) Apply schema and seed data
-psql -d personal_productivity_app -f db/schema.sql
-psql -d personal_productivity_app -f db/seed.sql
+psql -U <username> -d personal_productivity_app -f db/schema.sql
+psql -U <username> -d personal_productivity_app -f db/seed.sql
 
 # 4) Set database connection string
-export DATABASE_URL="postgres://<user>:<password>@localhost:5432/personal_productivity_app"
+export DATABASE_URL="postgres://<username>:<password>@localhost:5432/personal_productivity_app"
 
-# 5) Start the app (dev)
+# 5) Start app (dev)
 npm run dev
 ```
+
+Open: `http://localhost:3000`
 
 ### Useful commands
 ```bash
@@ -41,7 +55,22 @@ npm run lint:fix   # lint autofix
 npm run format     # prettier format
 ```
 
-## 2. Project Structure
+## 2. Route Map
+
+### View routes
+- `GET /` → Home (`index.ejs`)
+- `GET /activities/new` → New Activity (`new-activity.ejs`)
+- `GET /activities/continue` → Continue Activity (`continue-activity.ejs`)
+- `GET /activities/timer` → Timer (`timer.ejs`)
+
+### Action routes
+- `POST /activities` → Create activity flow (redirects to timer)
+- `POST /activities/summary` → Save session and render summary
+- `POST /activities/:id/delete` → Mark activity group completed (server redirect)
+- `POST /activities/:id/complete` → Mark activity group completed (JSON response)
+- `POST /activities/restore` → Restore activity group (set uncompleted)
+
+## 3. Project Structure
 
 ```text
 .
@@ -61,7 +90,7 @@ npm run format     # prettier format
 ```
 
 ### Folder purposes
-- `controllers/`: Request handlers and logic.
+- `controllers/`: Request handlers and DB-backed view/action logic.
 - `routes/`: Express route definitions and route-to-controller mapping.
 - `views/`: EJS templates rendered by the server.
 - `views/partials/`: Reusable EJS components.
@@ -77,16 +106,16 @@ npm run format     # prettier format
 - `.prettierrc`: Prettier formatting config.
 - `.editorconfig`: Editor-level formatting defaults.
 
-## 3. Tech Stack
+## 4. Tech Stack
 
 - Backend: Node.js, Express.js
-- Database: PostgreSQL
+- Database: PostgreSQL (`pg` / node-postgres)
 - Templating: EJS
 - Frontend: HTML, CSS, JavaScript
 - Code quality/formatting: ESLint, Prettier
 - Dev tooling: Nodemon
 
-## 4. Developer Plugins + Commit Naming
+## 5. Developer Plugins + Commit Naming
 
 ### Recommended editor plugins
 - ESLint (lint diagnostics + auto-fix)
@@ -117,8 +146,7 @@ Examples and usage:
 - `docs(readme): add setup and architecture sections`  
   Use for documentation-only changes.
 
-
-## 5. Branch Naming Convention
+## 6. Branch Naming Convention
 
 Format:
 ```text
@@ -126,21 +154,18 @@ type/short-kebab-description
 ```
 
 Examples and usage:
-- `feat/project-page`  
-  New feature work.
-- `feat/timer-start-stop`  
-  Feature for timer lifecycle.
-- `test/activities-controller`  
-  Test-focused work.
+- `feat/project-page`
+- `feat/timer-start-stop`
+- `test/activities-controller`
 
-## 6. Database Schema Diagram
+## 7. Database Schema Diagram
 
 ![Database schema diagram](public/image/database-schema.png)
 
 - Relationship: one `category` to many `activities`.
 - Foreign key behavior: deleting a category sets child rows to default category (`id = 1`).
 
-## 7. Architecture Overview
+## 8. Architecture Overview
 
 ```mermaid
 flowchart TD

@@ -90,14 +90,7 @@
   max-width: 220px;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: conic-gradient(
-    var(--focus) 0deg 130deg,
-    var(--planning) 130deg 245deg,
-    var(--life-admin) 245deg 305deg,
-    var(--learning) 305deg 340deg,
-    var(--creative) 340deg 352deg,
-    var(--communication) 352deg 360deg
-  );
+  background: conic-gradient(var(--donut-gradient, var(--focus) 0deg 360deg));
   position: relative;
 }
 
