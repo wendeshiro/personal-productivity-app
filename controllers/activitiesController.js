@@ -136,7 +136,6 @@ const fetchTodayInsight = async () => {
        AND a.start_time >= CURRENT_DATE
        AND a.start_time < CURRENT_DATE + INTERVAL '1 day'
        AND a.end_time IS NOT NULL
-       AND NOT a.is_completed
       WHERE c.name <> 'Uncategorized'
       GROUP BY c.id, c.name
       ORDER BY c.id

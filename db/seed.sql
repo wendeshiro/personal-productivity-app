@@ -160,6 +160,14 @@ VALUES
     FALSE
   ),
   (
+    'Read test notes',
+    7,
+    NULL,
+    '2026-03-16 18:00:00-07',
+    '2026-03-16 19:00:00-07',
+    TRUE
+  ),
+  (
     'UI sketch iteration',
     6,
     'Try alternate home layout ideas',
