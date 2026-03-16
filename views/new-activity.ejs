@@ -67,31 +67,7 @@
       </main>
     </div>
 
-    <script>
-      (() => {
-        const categorySelect = document.getElementById("activity-category");
-        const iconWrap = document.getElementById("category-icon-wrap");
-        const iconImage = document.getElementById("category-icon-image");
-
-        if (!categorySelect || !iconWrap || !iconImage) {
-          return;
-        }
-
-        const updateCategoryIcon = () => {
-          const selectedOption = categorySelect.options[categorySelect.selectedIndex];
-          const icon = selectedOption.dataset.icon;
-          const label = selectedOption.value;
-
-          if (icon) {
-            iconImage.src = icon;
-          }
-
-          iconImage.alt = `${label} category icon`;
-        };
-
-        categorySelect.addEventListener("change", updateCategoryIcon);
-        updateCategoryIcon();
-      })();
-    </script>
+    <script src="/js/shared-active-timer-redirect.js"></script>
+    <script src="/js/page-new-activity.js"></script>
   </body>
 </html>
