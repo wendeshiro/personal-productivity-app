@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/continue-activity.css" />
+  </head>
+  <body class="app-page continue-activity-page">
+    <div class="app-shell">
+      <main class="app-screen continue-activity-screen">
+        <section class="app-back-controls" aria-label="Navigation controls">
+          <a href="/" class="app-back-button" aria-label="Back">
+            <img src="/image/back-button.svg" alt="" width="52" height="52" />
+          </a>
+        </section>
+
+        <section class="continue-activity-content" aria-labelledby="continue-activity-title">
+          <h1 id="continue-activity-title">Select an Activity</h1>
+
+          <section class="continue-activity-list" aria-label="Saved activities">
+            <div class="activity-list-container">
+              <% activities.forEach((activity, index) => { %>
+                <article
+                  class="activity-item <%= index === 0 ? 'is-primary' : '' %>"
+                  data-activity-id="<%= activity.id %>"
+                  tabindex="0"
+                  role="button"
+                  aria-expanded="false"
+                >
+                  <div class="activity-item-top">
+                    <h2><%= activity.name %></h2>
+                    <p class="activity-streak">🔥 <%= activity.activeDays %> days</p>
+                  </div>
+
+                  <div class="activity-item-middle">
+                    <div class="activity-category">
+                      <span class="category-icon">
+                        <img src="<%= activity.icon %>" alt="" />
+                      </span>
+                      <p><%= activity.category %></p>
+                    </div>
+
+                    <div class="activity-time">
+                      <p class="label">Total Time</p>
+                      <p class="value"><%= activity.totalTime %></p>
+                    </div>
+                  </div>
+
+                  <div class="activity-actions-row">
+                    <a
+                      class="continue-btn"
+                      href="/activities/timer?activityName=<%= encodeURIComponent(activity.name) %>&category=<%= encodeURIComponent(activity.category) %>"
+                    >
+                      Continue
+                    </a>
+                    <form class="delete-form" action="/activities/<%= activity.id %>/delete" method="post">
+                      <button class="delete-btn" type="submit" aria-label="Delete <%= activity.name %>">
+                        <img src="/image/delete-button.svg" alt="" width="48" height="48" />
+                      </button>
+                    </form>
+                  </div>
+                </article>
+              <% }) %>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (() => {
+        const activityItems = Array.from(document.querySelectorAll(".activity-item"));
+        let expandedItem = null;
+
+        const collapseItem = (item) => {
+          item.classList.remove("is-expanded");
+          item.setAttribute("aria-expanded", "false");
+        };
+
+        const expandItem = (item) => {
+          item.classList.add("is-expanded");
+          item.setAttribute("aria-expanded", "true");
+        };
+
+        const toggleItem = (item) => {
+          if (expandedItem === item) {
+            collapseItem(item);
+            expandedItem = null;
+            return;
+          }
+
+          if (expandedItem) {
+            collapseItem(expandedItem);
+          }
+
+          expandItem(item);
+          expandedItem = item;
+        };
+
+        activityItems.forEach((item) => {
+          item.addEventListener("click", (event) => {
+            if (event.target.closest(".activity-actions-row")) {
+              return;
+            }
+
+            toggleItem(item);
+          });
+
+          item.addEventListener("keydown", (event) => {
+            if (event.target.closest(".activity-actions-row")) {
+              return;
+            }
+
+            if (event.key !== "Enter" && event.key !== " ") {
+              return;
+            }
+
+            event.preventDefault();
+            toggleItem(item);
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

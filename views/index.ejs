@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/home.css" />
+  </head>
+  <body class="app-page home-page-body">
+    <div class="app-shell home-app-shell">
+      <main class="app-screen home-screen">
+        <header class="app-header">
+          <h1 class="app-title">Locked-In</h1>
+          <p class="app-subtitle">Productivity tracker</p>
+        </header>
+
+        <section class="activity-actions" aria-label="Quick activity actions">
+          <form action="/activities/new" method="get">
+            <%- include("partials/button", {
+              label: "New Activity",
+              className: "new-activity-btn",
+              type: "submit",
+            }) %>
+          </form>
+
+          <form action="/activities/continue" method="get">
+            <%- include("partials/button", {
+              label: "Continue Activity",
+              className: "continue-activity-btn",
+              type: "submit",
+            }) %>
+          </form>
+        </section>
+
+        <section class="daily-insight" aria-labelledby="daily-insight-title">
+          <h2 id="daily-insight-title">Daily Insight</h2>
+
+          <div class="insight-card">
+            <div class="insight-chart" aria-hidden="true">
+              <div class="donut-chart"></div>
+            </div>
+
+            <aside class="category-legend" aria-label="Activity categories">
+              <ul>
+                <% categories.forEach((category) => { %>
+                  <li>
+                    <span class="legend-dot legend-dot--<%= category.tone %>"></span>
+                    <span><%= category.name %></span>
+                  </li>
+                <% }) %>
+              </ul>
+            </aside>
+          </div>
+
+          <div class="trends-action">
+            <%- include("partials/button", {
+              label: "View Trends Report",
+              className: "view-trends-btn",
+            }) %>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
