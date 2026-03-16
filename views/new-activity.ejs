@@ -67,6 +67,7 @@
       </main>
     </div>
 
+    <script src="/js/active-timer-redirect.js"></script>
     <script>
       (() => {
         const categorySelect = document.getElementById("activity-category");
@@ -78,7 +79,8 @@
         }
 
         const updateCategoryIcon = () => {
-          const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+          const selectedOption =
+            categorySelect.options[categorySelect.selectedIndex];
           const icon = selectedOption.dataset.icon;
           const label = selectedOption.value;
 
