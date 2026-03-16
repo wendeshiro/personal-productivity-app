@@ -46,7 +46,28 @@
               <span id="timer-toggle-label">Start</span>
             </button>
 
-            <form action="/" method="get">
+            <form
+              id="timer-stop-form"
+              action="/activities/summary"
+              method="post"
+            >
+              <input
+                type="hidden"
+                name="activityId"
+                value="<%= activityId || '' %>"
+              />
+              <input
+                type="hidden"
+                name="activityName"
+                value="<%= activityName %>"
+              />
+              <input type="hidden" name="category" value="<%= category %>" />
+              <input
+                type="hidden"
+                id="session-time-input"
+                name="sessionTime"
+                value="<%= timerValue %>"
+              />
               <button type="submit" class="timer-stop-btn">Stop</button>
             </form>
           </section>
@@ -60,8 +81,17 @@
         const toggleButton = document.getElementById("timer-toggle-btn");
         const toggleLabel = document.getElementById("timer-toggle-label");
         const toggleIcon = document.getElementById("timer-toggle-icon");
+        const stopForm = document.getElementById("timer-stop-form");
+        const sessionTimeInput = document.getElementById("session-time-input");
 
-        if (!timerDisplay || !toggleButton || !toggleLabel || !toggleIcon) {
+        if (
+          !timerDisplay ||
+          !toggleButton ||
+          !toggleLabel ||
+          !toggleIcon ||
+          !stopForm ||
+          !sessionTimeInput
+        ) {
           return;
         }
 
@@ -120,6 +150,10 @@
 
         toggleButton.addEventListener("click", () => {
           setRunning(intervalId === null);
+        });
+
+        stopForm.addEventListener("submit", () => {
+          sessionTimeInput.value = formatTimerValue(elapsedSeconds);
         });
       })();
     </script>
