@@ -1,0 +1,242 @@
+.trends-screen {
+  padding: 24px 24px 36px;
+}
+
+.trends-content h1 {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-title);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.trend-range-toggle {
+  margin: 28px auto 18px;
+  width: fit-content;
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  background: var(--button-light);
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 6px;
+}
+
+.trends-content {
+  text-align: center;
+}
+
+.trend-range-btn {
+  min-width: 120px;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 24px;
+  background: transparent;
+  color: var(--primary);
+  font-size: var(--text-h2);
+  cursor: pointer;
+}
+
+.trend-range-btn.is-active {
+  background: var(--button-dark);
+  color: #ffffff;
+}
+
+.trend-date-row {
+  margin: 12px 0 16px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+}
+
+.trend-nav-btn {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 56px;
+  line-height: 0.8;
+  cursor: pointer;
+}
+
+.trend-date-label {
+  margin: 0;
+  font-size: clamp(24px, 6vw, 48px);
+  line-height: 1.1;
+  font-family: var(--font-serif);
+  color: var(--primary);
+}
+
+.trend-chart-section {
+  margin-top: 8px;
+}
+
+.trend-pie-wrap {
+  margin: 0 auto;
+  position: relative;
+  width: min(100%, 400px);
+  aspect-ratio: 1;
+}
+
+.trend-pie-wrap.is-hidden {
+  display: none;
+}
+
+#trend-pie-chart {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.trend-week-chart {
+  width: min(100%, 460px);
+  margin: 0 auto;
+  position: relative;
+}
+
+.trend-week-chart.is-hidden {
+  display: none;
+}
+
+.trend-week-bars {
+  height: 380px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 14px;
+  padding: 10px 8px 0;
+}
+
+.trend-week-bar-item {
+  height: 100%;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: 12px;
+}
+
+.trend-week-bar {
+  width: clamp(20px, 3.7vw, 30px);
+  min-height: 24px;
+  border-radius: 999px;
+  background: #d2c8bf;
+}
+
+.trend-week-bar.is-active {
+  background: linear-gradient(180deg, #ff7a45 0%, #f5d70f 100%);
+}
+
+.trend-week-label {
+  margin: 0;
+  font-size: var(--text-h2);
+  color: var(--primary);
+}
+
+.trend-week-tooltip {
+  z-index: 2;
+}
+
+.trend-tooltip {
+  position: absolute;
+  border: 1px solid var(--primary);
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 12px 18px;
+  min-width: 140px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, 0);
+  transition:
+    opacity 120ms ease,
+    visibility 120ms ease;
+}
+
+.trend-tooltip.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.trend-tooltip p {
+  margin: 0 0 2px;
+  font-size: var(--text-h2);
+  color: var(--primary);
+}
+
+.trend-tooltip strong {
+  font-size: var(--text-h2);
+  color: var(--ink);
+}
+
+.trend-total-label {
+  margin: 14px 0 4px;
+  font-size: var(--text-h1);
+  color: var(--primary);
+}
+
+.trend-total-time {
+  margin: 0;
+  font-size: clamp(44px, 7vw, 64px);
+  line-height: 1.05;
+  font-weight: 700;
+}
+
+.trend-legend-card {
+  margin-top: 28px;
+  border: 1px solid var(--primary);
+  border-radius: 40px;
+  background: var(--button-light);
+  padding: 28px 26px;
+}
+
+.trend-legend-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 20px;
+  text-align: left;
+}
+
+.trend-legend-list li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, auto) auto minmax(0, auto);
+  align-items: center;
+  gap: 12px;
+  color: var(--primary);
+  font-size: var(--text-h2);
+}
+
+.trend-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.trend-dot--focus {
+  background: var(--focus);
+}
+
+.trend-dot--planning {
+  background: var(--planning);
+}
+
+.trend-dot--life-admin {
+  background: var(--life-admin);
+}
+
+.trend-dot--learning {
+  background: var(--learning);
+}
+
+.trend-dot--creative {
+  background: var(--creative);
+}
+
+.trend-dot--communication {
+  background: var(--communication);
+}
+
+.trend-category-time {
+  font-weight: 700;
+}

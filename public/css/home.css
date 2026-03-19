@@ -36,6 +36,10 @@
   margin: 0;
 }
 
+.trends-action form {
+  margin: 0;
+}
+
 .activity-actions button,
 .trends-action button {
   width: 100%;

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/trends.css" />
+  </head>
+  <body class="app-page trends-page">
+    <div class="app-shell">
+      <main class="app-screen trends-screen">
+        <section class="app-back-controls" aria-label="Navigation controls">
+          <a href="/" class="app-back-button" aria-label="Back to Home">
+            <img src="/image/back-button.svg" alt="" width="52" height="52" />
+          </a>
+        </section>
+
+        <section class="trends-content" aria-labelledby="trends-title">
+          <h1 id="trends-title">Trend Report</h1>
+
+          <div class="trend-range-toggle" role="tablist" aria-label="Date range">
+            <button
+              type="button"
+              class="trend-range-btn is-active"
+              data-range="day"
+              role="tab"
+              aria-selected="true"
+            >
+              Day
+            </button>
+            <button
+              type="button"
+              class="trend-range-btn"
+              data-range="week"
+              role="tab"
+              aria-selected="false"
+            >
+              Week
+            </button>
+          </div>
+
+          <div class="trend-date-row">
+            <button type="button" class="trend-nav-btn" aria-label="Previous day">
+              &#8249;
+            </button>
+            <p class="trend-date-label" id="trend-date-label"><%= trendDateLabel %></p>
+            <button type="button" class="trend-nav-btn" aria-label="Next day">
+              &#8250;
+            </button>
+          </div>
+
+          <section class="trend-chart-section" aria-label="Trends chart">
+            <div class="trend-pie-wrap" id="trend-day-chart">
+              <canvas id="trend-pie-chart" width="360" height="360"></canvas>
+              <div class="trend-tooltip is-hidden" id="trend-pie-tooltip">
+                <p id="trend-tooltip-name"></p>
+                <strong id="trend-tooltip-time"></strong>
+              </div>
+            </div>
+
+            <div class="trend-week-chart is-hidden" id="trend-week-chart" aria-hidden="true">
+              <div class="trend-week-bars" id="trend-week-bars">
+                <% trendData.week.bars.forEach((bar) => { %>
+                  <div class="trend-week-bar-item">
+                    <div
+                      class="trend-week-bar <%= bar.isActive ? 'is-active' : '' %>"
+                      style="height: <%= bar.barHeight %>px"
+                    ></div>
+                    <p class="trend-week-label"><%= bar.label %></p>
+                  </div>
+                <% }) %>
+              </div>
+              <div class="trend-tooltip trend-week-tooltip is-hidden" id="trend-week-tooltip">
+                <p id="trend-week-tooltip-name"></p>
+                <strong id="trend-week-tooltip-time"></strong>
+              </div>
+            </div>
+
+            <p class="trend-total-label" id="trend-total-label"><%= trendTotalLabel %></p>
+            <p class="trend-total-time" id="trend-total-time"><%= trendTotalTime %></p>
+          </section>
+
+          <section class="trend-legend-card" aria-label="Category breakdown">
+            <ul class="trend-legend-list" id="trend-legend-list">
+              <% chartCategories.forEach((category) => { %>
+                <li>
+                  <span class="trend-dot trend-dot--<%= category.tone %>"></span>
+                  <span class="trend-category-name"><%= category.name %></span>
+                  <span class="trend-separator">/</span>
+                  <strong class="trend-category-time"><%= category.timeLabel %></strong>
+                </li>
+              <% }) %>
+            </ul>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script id="trend-chart-data" type="application/json">
+      <%- JSON.stringify(chartCategories) %>
+    </script>
+    <script id="trend-page-data" type="application/json">
+      <%- JSON.stringify(trendData) %>
+    </script>
+    <script src="/js/page-trends.js"></script>
+  </body>
+</html>
