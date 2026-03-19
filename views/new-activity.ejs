@@ -19,12 +19,14 @@
         <section class="new-activity-content" aria-labelledby="create-activity-title">
           <h1 id="create-activity-title">Create a New Activity</h1>
 
+          <% /* `page-new-activity.js` swaps this preview icon when the category select changes. */ %>
           <div class="category-icon-area">
             <div class="category-icon-wrap" id="category-icon-wrap">
               <img id="category-icon-image" src="/image/focus-fill.svg" alt="Focus category icon" />
             </div>
           </div>
 
+          <% /* Submit posts to `/activities`, which either reuses an existing grouped activity or starts a new timer flow. */ %>
           <form action="/activities" method="post" class="new-activity-form">
             <div class="form-field">
               <label class="visually-hidden" for="activity-name">Activity Name</label>
@@ -39,6 +41,7 @@
 
             <div class="form-field select-field">
               <label class="visually-hidden" for="activity-category">Category</label>
+              <% /* Each option carries its icon path so the preview above stays in sync with the selected category. */ %>
               <select id="activity-category" name="category" required>
                 <% categories.forEach((category, index) => { %>
                   <option

@@ -37,6 +37,7 @@
           <h2 id="daily-insight-title">Daily Insight</h2>
 
           <div class="insight-card">
+            <% /* Home donut uses the server-built `donutGradient` from `renderHome`. */ %>
             <div class="insight-chart" aria-hidden="true">
               <div
                 class="donut-chart"
@@ -44,6 +45,7 @@
               ></div>
             </div>
 
+            <% /* Legend order matches the category ordering created in `fetchTodayInsight`. */ %>
             <aside class="category-legend" aria-label="Activity categories">
               <ul>
                 <% categories.forEach((category) => { %>
@@ -56,6 +58,7 @@
             </aside>
           </div>
 
+          <% /* This jumps into the trends page, which reuses the same category totals in a richer view. */ %>
           <div class="trends-action">
             <form action="/trends" method="get">
               <%- include("partials/button", {
