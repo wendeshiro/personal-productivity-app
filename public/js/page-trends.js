@@ -5,8 +5,12 @@
   const tooltipName = documentNode.getElementById("trend-tooltip-name");
   const tooltipTime = documentNode.getElementById("trend-tooltip-time");
   const weekTooltip = documentNode.getElementById("trend-week-tooltip");
-  const weekTooltipName = documentNode.getElementById("trend-week-tooltip-name");
-  const weekTooltipTime = documentNode.getElementById("trend-week-tooltip-time");
+  const weekTooltipName = documentNode.getElementById(
+    "trend-week-tooltip-name",
+  );
+  const weekTooltipTime = documentNode.getElementById(
+    "trend-week-tooltip-time",
+  );
   const trendDateLabel = documentNode.getElementById("trend-date-label");
   const trendTotalLabel = documentNode.getElementById("trend-total-label");
   const trendTotalTime = documentNode.getElementById("trend-total-time");
@@ -14,6 +18,8 @@
   const dayChart = documentNode.getElementById("trend-day-chart");
   const weekChart = documentNode.getElementById("trend-week-chart");
   const weekBarsRoot = documentNode.getElementById("trend-week-bars");
+  const previousButton = documentNode.getElementById("trend-prev-btn");
+  const nextButton = documentNode.getElementById("trend-next-btn");
   const chartDataNode = documentNode.getElementById("trend-chart-data");
   const pageDataNode = documentNode.getElementById("trend-page-data");
   const rangeButtons = Array.from(
@@ -32,8 +38,44 @@
     }
   };
 
+  const parseDateKey = (dateValue) => {
+    if (typeof dateValue !== "string") {
+      return null;
+    }
+
+    const match = dateValue.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) {
+      return null;
+    }
+
+    const parsed = new Date(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3]),
+    );
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    parsed.setHours(0, 0, 0, 0);
+    return parsed;
+  };
+
+  const formatDateKey = (dateValue) =>
+    `${dateValue.getFullYear()}-${String(dateValue.getMonth() + 1).padStart(
+      2,
+      "0",
+    )}-${String(dateValue.getDate()).padStart(2, "0")}`;
+
+  const shiftDateByDays = (dateValue, daysDelta) => {
+    const shifted = new Date(dateValue);
+    shifted.setDate(shifted.getDate() + daysDelta);
+    shifted.setHours(0, 0, 0, 0);
+    return shifted;
+  };
+
   const fallbackCategories = parseJsonNode(chartDataNode, []);
-  const pageData = parseJsonNode(pageDataNode, {
+  let pageData = parseJsonNode(pageDataNode, {
     day: {
       dateLabel: "Today",
       totalLabel: "Total time",
@@ -63,7 +105,9 @@
     !legendList ||
     !dayChart ||
     !weekChart ||
-    !weekBarsRoot
+    !weekBarsRoot ||
+    !previousButton ||
+    !nextButton
   ) {
     return;
   }
@@ -81,9 +125,12 @@
       color: getColorByTone(item.tone),
     }));
 
-  const dayCategories = normalizeCategories(pageData.day?.categories);
-  const weekCategories = normalizeCategories(pageData.week?.categories);
-  const dayChartData = dayCategories.filter((item) => item.totalSeconds > 0);
+  let dayChartData = [];
+  let currentReferenceDate = parseDateKey(pageData.day?.referenceDate);
+  if (!currentReferenceDate) {
+    currentReferenceDate = new Date();
+    currentReferenceDate.setHours(0, 0, 0, 0);
+  }
 
   const context = canvas.getContext("2d");
 
@@ -110,6 +157,15 @@
     hideWeekTooltip();
   };
 
+  const getModeCategories = (mode) =>
+    normalizeCategories(pageData?.[mode]?.categories);
+
+  const refreshDayChartData = () => {
+    dayChartData = getModeCategories("day").filter(
+      (item) => item.totalSeconds > 0,
+    );
+  };
+
   const renderLegend = (categories) => {
     legendList.innerHTML = "";
 
@@ -123,15 +179,15 @@
       name.className = "trend-category-name";
       name.textContent = category.name;
 
-      const separator = documentNode.createElement("span");
-      separator.className = "trend-separator";
-      separator.textContent = "/";
+      const legend = documentNode.createElement("div");
+      legend.className = "trend-legend-main";
+      legend.append(dot, name);
 
       const time = documentNode.createElement("strong");
       time.className = "trend-category-time";
       time.textContent = category.timeLabel;
 
-      listItem.append(dot, name, separator, time);
+      listItem.append(legend, time);
       legendList.append(listItem);
     });
   };
@@ -180,23 +236,36 @@
 
       item.append(barNode, label);
 
-      const showWeekTooltip = (event) => {
+      const showWeekTooltipForItem = () => {
         weekTooltipName.textContent = bar.label || "";
         weekTooltipTime.textContent = bar.timeLabel || "00:00";
         weekTooltip.classList.remove("is-hidden");
 
-        const bounds = weekChart.getBoundingClientRect();
-        const leftOffset = event.clientX - bounds.left + 16;
-        const topOffset = event.clientY - bounds.top - 20;
-        const maxLeft = Math.max(8, bounds.width - weekTooltip.offsetWidth - 8);
-        const maxTop = Math.max(8, bounds.height - weekTooltip.offsetHeight - 8);
+        const chartBounds = weekChart.getBoundingClientRect();
+        const itemBounds = item.getBoundingClientRect();
+        const barBounds = barNode.getBoundingClientRect();
 
-        weekTooltip.style.left = `${Math.max(8, Math.min(leftOffset, maxLeft))}px`;
-        weekTooltip.style.top = `${Math.max(8, Math.min(topOffset, maxTop))}px`;
+        const centeredLeft =
+          itemBounds.left +
+          itemBounds.width / 2 -
+          chartBounds.left -
+          weekTooltip.offsetWidth / 2;
+        const preferredTop =
+          barBounds.top - chartBounds.top - weekTooltip.offsetHeight - 12;
+        const maxLeft = Math.max(
+          8,
+          chartBounds.width - weekTooltip.offsetWidth - 8,
+        );
+        const maxTop = Math.max(
+          8,
+          chartBounds.height - weekTooltip.offsetHeight - 8,
+        );
+
+        weekTooltip.style.left = `${Math.max(8, Math.min(centeredLeft, maxLeft))}px`;
+        weekTooltip.style.top = `${Math.max(8, Math.min(preferredTop, maxTop))}px`;
       };
 
-      item.addEventListener("mouseenter", showWeekTooltip);
-      item.addEventListener("mousemove", showWeekTooltip);
+      item.addEventListener("mouseenter", showWeekTooltipForItem);
       item.addEventListener("mouseleave", hideWeekTooltip);
 
       weekBarsRoot.append(item);
@@ -272,16 +341,19 @@
     });
   };
 
-  const setTooltipPosition = (clientX, clientY) => {
+  const setTooltipPositionAtSliceMidpoint = (segment) => {
     const bounds = canvas.getBoundingClientRect();
-    const leftOffset = clientX - bounds.left + 16;
-    const topOffset = clientY - bounds.top - 20;
-
+    const midAngle = (segment.start + segment.end) / 2;
+    const midRadius = (innerRadius + radius) / 2;
+    const pointX = center + Math.cos(midAngle - Math.PI / 2) * midRadius;
+    const pointY = center + Math.sin(midAngle - Math.PI / 2) * midRadius;
+    const centeredLeft = pointX - tooltip.offsetWidth / 2;
+    const centeredTop = pointY - tooltip.offsetHeight / 2;
     const maxLeft = Math.max(8, bounds.width - tooltip.offsetWidth - 8);
     const maxTop = Math.max(8, bounds.height - tooltip.offsetHeight - 8);
 
-    tooltip.style.left = `${Math.max(8, Math.min(leftOffset, maxLeft))}px`;
-    tooltip.style.top = `${Math.max(8, Math.min(topOffset, maxTop))}px`;
+    tooltip.style.left = `${Math.max(8, Math.min(centeredLeft, maxLeft))}px`;
+    tooltip.style.top = `${Math.max(8, Math.min(centeredTop, maxTop))}px`;
   };
 
   const findCategoryAtPoint = (clientX, clientY) => {
@@ -302,9 +374,8 @@
       angle += Math.PI * 2;
     }
 
-    return (
-      segments.find((segment) => angle >= segment.start && angle < segment.end)
-        ?.category || null
+    return segments.find(
+      (segment) => angle >= segment.start && angle < segment.end,
     );
   };
 
@@ -314,17 +385,17 @@
       return;
     }
 
-    const category = findCategoryAtPoint(event.clientX, event.clientY);
+    const activeSegment = findCategoryAtPoint(event.clientX, event.clientY);
 
-    if (!category) {
+    if (!activeSegment) {
       hidePieTooltip();
       return;
     }
 
-    tooltipName.textContent = category.name;
-    tooltipTime.textContent = category.timeLabel;
+    tooltipName.textContent = activeSegment.category.name;
+    tooltipTime.textContent = activeSegment.category.timeLabel;
     tooltip.classList.remove("is-hidden");
-    setTooltipPosition(event.clientX, event.clientY);
+    setTooltipPositionAtSliceMidpoint(activeSegment);
   };
 
   const setActiveMode = (mode) => {
@@ -337,15 +408,16 @@
     });
 
     const modeData = pageData[activeMode] || pageData.day;
-    const categories =
-      activeMode === "week" && weekCategories.length > 0
-        ? weekCategories
-        : dayCategories;
+    const categories = getModeCategories(activeMode);
 
     trendDateLabel.textContent = modeData.dateLabel || "";
     trendTotalLabel.textContent = modeData.totalLabel || "Total time";
     trendTotalTime.textContent = modeData.totalTime || "00:00";
     renderLegend(categories);
+
+    if (activeMode === "day") {
+      refreshDayChartData();
+    }
 
     if (activeMode === "week") {
       dayChart.classList.add("is-hidden");
@@ -365,14 +437,96 @@
     drawDayChart();
   };
 
+  const updateArrowLabels = () => {
+    previousButton.setAttribute(
+      "aria-label",
+      activeMode === "week" ? "Previous week" : "Previous day",
+    );
+    nextButton.setAttribute(
+      "aria-label",
+      activeMode === "week" ? "Next week" : "Next day",
+    );
+  };
+
+  const fetchTrendData = async (mode, dateValue) => {
+    const searchParams = new URLSearchParams({
+      mode,
+      date: formatDateKey(dateValue),
+    });
+
+    try {
+      const response = await globalThis.fetch(`/api/trends?${searchParams.toString()}`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      return await response.json();
+    } catch {
+      return null;
+    }
+  };
+
+  const loadModeData = async (mode, dateValue) => {
+    const fetched = await fetchTrendData(mode, dateValue);
+
+    if (!fetched) {
+      return false;
+    }
+
+    pageData = {
+      ...pageData,
+      [mode]: fetched,
+    };
+
+    const parsedReferenceDate = parseDateKey(fetched.referenceDate);
+    if (parsedReferenceDate) {
+      currentReferenceDate = parsedReferenceDate;
+    }
+
+    return true;
+  };
+
+  const shiftByDirection = async (direction) => {
+    const dayDelta = activeMode === "week" ? 7 : 1;
+    const nextDate = shiftDateByDays(currentReferenceDate, direction * dayDelta);
+    const loaded = await loadModeData(activeMode, nextDate);
+
+    if (!loaded) {
+      return;
+    }
+
+    setActiveMode(activeMode);
+  };
+
   rangeButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      setActiveMode(button.dataset.range || "day");
+    button.addEventListener("click", async () => {
+      const nextMode = button.dataset.range === "week" ? "week" : "day";
+
+      if (nextMode !== activeMode) {
+        await loadModeData(nextMode, currentReferenceDate);
+      }
+
+      setActiveMode(nextMode);
+      updateArrowLabels();
     });
   });
 
-  drawDayChart();
   setActiveMode("day");
+  updateArrowLabels();
+
+  previousButton.addEventListener("click", async () => {
+    await shiftByDirection(-1);
+  });
+
+  nextButton.addEventListener("click", async () => {
+    await shiftByDirection(1);
+  });
 
   globalThis.addEventListener("resize", () => {
     if (activeMode === "day") {

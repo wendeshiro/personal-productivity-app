@@ -149,6 +149,40 @@ const formatDateKey = (dateValue) =>
     "0",
   )}-${String(dateValue.getDate()).padStart(2, "0")}`;
 
+const parseDateInput = (dateValue) => {
+  if (typeof dateValue !== "string") {
+    return null;
+  }
+
+  const match = dateValue.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (
+    Number.isNaN(parsedDate.getTime()) ||
+    parsedDate.getFullYear() !== year ||
+    parsedDate.getMonth() !== month - 1 ||
+    parsedDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  parsedDate.setHours(0, 0, 0, 0);
+  return parsedDate;
+};
+
+const getStartOfDay = (dateValue) => {
+  const start = new Date(dateValue);
+  start.setHours(0, 0, 0, 0);
+  return start;
+};
+
 const getStartOfWeekSunday = (dateValue) => {
   const start = new Date(dateValue);
   start.setHours(0, 0, 0, 0);
@@ -261,11 +295,35 @@ const buildWeekTrendData = async (referenceDate = new Date()) => {
   );
 
   return {
+    referenceDate: formatDateKey(referenceDate),
     dateLabel: `${formatMonthDayWithOrdinal(weekStart)} - ${formatMonthDayWithOrdinal(weekEndDisplay)}`,
     totalLabel: "Weekly Total",
     totalTime: formatSecondsForTrend(totalSeconds),
     categories,
     bars: barsWithHeights,
+  };
+};
+
+const buildDayTrendData = async (referenceDate = new Date()) => {
+  const dayStart = getStartOfDay(referenceDate);
+  const dayEndExclusive = new Date(dayStart);
+  dayEndExclusive.setDate(dayStart.getDate() + 1);
+  const today = getStartOfDay(new Date());
+  const categories = await fetchCategoryTotalsByRange(dayStart, dayEndExclusive);
+  const totalSeconds = categories.reduce(
+    (sum, category) => sum + category.totalSeconds,
+    0,
+  );
+  const isToday = formatDateKey(dayStart) === formatDateKey(today);
+
+  return {
+    referenceDate: formatDateKey(dayStart),
+    dateLabel: isToday
+      ? formatTrendDateLabel(dayStart)
+      : formatMonthDayWithOrdinal(dayStart),
+    totalLabel: "Total time",
+    totalTime: formatSecondsForTrend(totalSeconds),
+    categories,
   };
 };
 
@@ -501,33 +559,18 @@ export const renderHome = async (_req, res) => {
 
 export const renderTrendsReport = async (_req, res) => {
   try {
-    const { categories } = await fetchTodayInsight();
-    const chartCategories = categories.map((category) => ({
-      name: category.name,
-      tone: category.tone,
-      totalSeconds: category.totalSeconds,
-      timeLabel: formatSecondsForTrend(category.totalSeconds),
-    }));
-    const totalSeconds = chartCategories.reduce(
-      (sum, category) => sum + category.totalSeconds,
-      0,
-    );
     const today = new Date();
+    const dayData = await buildDayTrendData(today);
     const weekData = await buildWeekTrendData(today);
 
     const trendData = {
-      day: {
-        dateLabel: formatTrendDateLabel(today),
-        totalLabel: "Total time",
-        totalTime: formatSecondsForTrend(totalSeconds),
-        categories: chartCategories,
-      },
+      day: dayData,
       week: weekData,
     };
 
     res.render("trends", {
       pageTitle: "Trend Report",
-      chartCategories,
+      chartCategories: trendData.day.categories,
       trendDateLabel: trendData.day.dateLabel,
       trendTotalTime: trendData.day.totalTime,
       trendTotalLabel: trendData.day.totalLabel,
@@ -535,6 +578,25 @@ export const renderTrendsReport = async (_req, res) => {
     });
   } catch {
     res.status(500).send("Failed to load trends report.");
+  }
+};
+
+export const getTrendData = async (req, res) => {
+  const mode = req.query.mode === "week" ? "week" : "day";
+  const parsedDate = parseDateInput(req.query.date);
+  const referenceDate = parsedDate || getStartOfDay(new Date());
+
+  try {
+    if (mode === "week") {
+      const weekData = await buildWeekTrendData(referenceDate);
+      res.json(weekData);
+      return;
+    }
+
+    const dayData = await buildDayTrendData(referenceDate);
+    res.json(dayData);
+  } catch {
+    res.status(500).json({ message: "Failed to load trend data." });
   }
 };
 

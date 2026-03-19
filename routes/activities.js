@@ -3,6 +3,7 @@ import {
   completeActivity,
   createActivity,
   deleteActivity,
+  getTrendData,
   renderActivitySummary,
   renderContinueActivity,
   renderHome,
@@ -16,6 +17,7 @@ const router = express.Router();
 
 router.get("/", renderHome);
 router.get("/trends", renderTrendsReport);
+router.get("/api/trends", getTrendData);
 router.get("/activities/new", renderNewActivity);
 router.get("/activities/continue", renderContinueActivity);
 router.get("/activities/timer", renderTimerScreen);

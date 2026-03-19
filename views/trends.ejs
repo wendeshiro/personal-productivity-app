@@ -17,7 +17,7 @@
         </section>
 
         <section class="trends-content" aria-labelledby="trends-title">
-          <h1 id="trends-title">Trend Report</h1>
+          <h1 id="trends-title">Trends Report</h1>
 
           <div class="trend-range-toggle" role="tablist" aria-label="Date range">
             <button
@@ -41,11 +41,21 @@
           </div>
 
           <div class="trend-date-row">
-            <button type="button" class="trend-nav-btn" aria-label="Previous day">
+            <button
+              type="button"
+              class="trend-nav-btn"
+              id="trend-prev-btn"
+              aria-label="Previous day"
+            >
               &#8249;
             </button>
             <p class="trend-date-label" id="trend-date-label"><%= trendDateLabel %></p>
-            <button type="button" class="trend-nav-btn" aria-label="Next day">
+            <button
+              type="button"
+              class="trend-nav-btn"
+              id="trend-next-btn"
+              aria-label="Next day"
+            >
               &#8250;
             </button>
           </div>
@@ -85,9 +95,10 @@
             <ul class="trend-legend-list" id="trend-legend-list">
               <% chartCategories.forEach((category) => { %>
                 <li>
-                  <span class="trend-dot trend-dot--<%= category.tone %>"></span>
-                  <span class="trend-category-name"><%= category.name %></span>
-                  <span class="trend-separator">/</span>
+                  <div class="trend-legend-main">
+                    <span class="trend-dot trend-dot--<%= category.tone %>"></span>
+                    <span class="trend-category-name"><%= category.name %></span>
+                  </div>
                   <strong class="trend-category-time"><%= category.timeLabel %></strong>
                 </li>
               <% }) %>
