@@ -273,6 +273,18 @@ const buildWeekTrendData = async (referenceDate = new Date()) => {
     weekStart,
     weekEndExclusive,
   );
+
+  // Sort categories based on descending total time.
+  const sortedCategories = [...categories].sort((left, right) => {
+    const totalDelta = right.totalSeconds - left.totalSeconds;
+
+    if (totalDelta !== 0) {
+      return totalDelta;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
+
   const bars = await fetchWeeklyBars(weekStart, weekEndExclusive);
   const activeTotals = bars
     .map((bar) => Number(bar.totalSeconds) || 0)
@@ -282,6 +294,7 @@ const buildWeekTrendData = async (referenceDate = new Date()) => {
   const maxBarHeight = 320;
   const minActiveHeight = 40;
   const placeholderHeight = 24;
+
   const barsWithHeights = bars.map((bar) => {
     const totalSeconds = Number(bar.totalSeconds) || 0;
     const barHeight =
@@ -299,7 +312,8 @@ const buildWeekTrendData = async (referenceDate = new Date()) => {
       isActive: totalSeconds > 0,
     };
   });
-  const totalSeconds = categories.reduce(
+
+  const totalSeconds = sortedCategories.reduce(
     (sum, category) => sum + category.totalSeconds,
     0,
   );
@@ -309,7 +323,7 @@ const buildWeekTrendData = async (referenceDate = new Date()) => {
     dateLabel: `${formatMonthDayWithOrdinal(weekStart)} - ${formatMonthDayWithOrdinal(weekEndDisplay)}`,
     totalLabel: "Weekly Total",
     totalTime: formatSecondsForTrend(totalSeconds),
-    categories,
+    categories: sortedCategories,
     bars: barsWithHeights,
   };
 };
@@ -324,7 +338,10 @@ const buildDayTrendData = async (referenceDate = new Date()) => {
     dayStart,
     dayEndExclusive,
   );
-  const activities = await fetchActivityTotalsByRange(dayStart, dayEndExclusive);
+  const activities = await fetchActivityTotalsByRange(
+    dayStart,
+    dayEndExclusive,
+  );
   const totalSeconds = categories.reduce(
     (sum, category) => sum + category.totalSeconds,
     0,
