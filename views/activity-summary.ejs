@@ -27,6 +27,7 @@
               </div>
             </div>
 
+            <% /* These data attributes let `page-activity-summary.js` animate totals and call complete/restore endpoints without inline EJS in the script. */ %>
             <div
               class="summary-total"
               data-updated-total="<%= updatedTotalTime %>"
@@ -51,6 +52,7 @@
 
           <h3 class="summary-question">Is this activity completed?</h3>
 
+          <% /* Button clicks stay on this page first; the summary script decides whether to open a save popup or call the completion endpoint. */ %>
           <div class="summary-actions" aria-label="Summary actions">
             <button
               type="button"
@@ -82,6 +84,7 @@
         aria-modal="true"
         aria-labelledby="ongoing-saved-message"
       >
+        <% /* Save-progress flow keeps the grouped activity in the list and sends the user back home. */ %>
         <div class="summary-popup">
           <p class="summary-popup-message" id="ongoing-saved-message">
             Activity progress has been saved. <br />
@@ -98,6 +101,7 @@
         aria-modal="true"
         aria-labelledby="completed-message"
       >
+        <% /* Complete flow removes the grouped activity from continue view, with undo calling the restore endpoint. */ %>
         <div class="summary-popup">
           <p class="summary-popup-message" id="completed-message">
             The activity has been removed from the list.

@@ -27,6 +27,7 @@ const homeCategoryOrder = [
   "Communication",
 ];
 
+// Shared parser for timer/session values posted between the timer, summary, and grouped totals logic.
 const parseTimeToSeconds = (timeValue) => {
   const parts = String(timeValue)
     .split(":")
@@ -40,6 +41,7 @@ const parseTimeToSeconds = (timeValue) => {
   return hours * 3600 + minutes * 60 + seconds;
 };
 
+// Normalizes database totals into the fixed-width `HH:MM:SS` format used across the app UI.
 const formatSecondsToTime = (totalSeconds) => {
   const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
   const hours = String(Math.floor(safeSeconds / 3600)).padStart(2, "0");
@@ -51,6 +53,7 @@ const formatSecondsToTime = (totalSeconds) => {
   return `${hours}:${minutes}:${seconds}`;
 };
 
+// Trends screens use a shorter display format so small daily totals do not waste horizontal space.
 const formatSecondsForTrend = (totalSeconds) => {
   const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
   const hours = Math.floor(safeSeconds / 3600);
@@ -67,6 +70,7 @@ const formatSecondsForTrend = (totalSeconds) => {
   return `${minutes}:${seconds}`;
 };
 
+// Produces the ordinal suffixes reused by both day and week trend labels.
 const formatOrdinalDay = (day) => {
   const mod100 = day % 100;
 
@@ -86,6 +90,7 @@ const formatOrdinalDay = (day) => {
   }
 };
 
+// Builds the special "Today - Mar 19th" label used by the trends day view.
 const formatTrendDateLabel = (dateValue) => {
   const dayWithOrdinal = formatOrdinalDay(dateValue.getDate());
   const monthLabel = dateValue.toLocaleString("en-US", { month: "short" });
@@ -93,6 +98,7 @@ const formatTrendDateLabel = (dateValue) => {
   return `Today - ${monthLabel} ${dayWithOrdinal}`;
 };
 
+// Formats standalone dates for week ranges and non-today day navigation labels.
 const formatMonthDayWithOrdinal = (dateValue) => {
   const monthLabel = dateValue.toLocaleString("en-US", { month: "short" });
   const dayWithOrdinal = formatOrdinalDay(dateValue.getDate());
@@ -100,15 +106,18 @@ const formatMonthDayWithOrdinal = (dateValue) => {
   return `${monthLabel} ${dayWithOrdinal}`;
 };
 
+// Week bars use this compact label directly under each column.
 const formatMonthDayShort = (dateValue) =>
   `${dateValue.getMonth() + 1}/${dateValue.getDate()}`;
 
+// A stable local date key lets weekly queries line up database rows with the rendered calendar positions.
 const formatDateKey = (dateValue) =>
   `${dateValue.getFullYear()}-${String(dateValue.getMonth() + 1).padStart(
     2,
     "0",
   )}-${String(dateValue.getDate()).padStart(2, "0")}`;
 
+// Parses `/api/trends` date query params into safe local-midnight Date objects for stepping logic.
 const parseDateInput = (dateValue) => {
   if (typeof dateValue !== "string") {
     return null;
@@ -137,12 +146,14 @@ const parseDateInput = (dateValue) => {
   return parsedDate;
 };
 
+// Daily trend queries and "today" comparisons both start from local midnight.
 const getStartOfDay = (dateValue) => {
   const start = new Date(dateValue);
   start.setHours(0, 0, 0, 0);
   return start;
 };
 
+// Weekly navigation anchors on Sunday so bars and labels stay aligned between server and client.
 const getStartOfWeekSunday = (dateValue) => {
   const start = new Date(dateValue);
   start.setHours(0, 0, 0, 0);
@@ -150,6 +161,7 @@ const getStartOfWeekSunday = (dateValue) => {
   return start;
 };
 
+// Feeds both the home donut and the trends views with category totals for a date range.
 const fetchCategoryTotalsByRange = async (rangeStart, rangeEndExclusive) => {
   const { rows } = await query(
     `
@@ -181,6 +193,40 @@ const fetchCategoryTotalsByRange = async (rangeStart, rangeEndExclusive) => {
   }));
 };
 
+// Daily trends use this separate query so the list can rank individual activities while still showing category dots.
+const fetchActivityTotalsByRange = async (rangeStart, rangeEndExclusive) => {
+  const { rows } = await query(
+    `
+      SELECT
+        a.title AS name,
+        c.name AS category,
+        COALESCE(SUM(a.duration_seconds), 0)::INTEGER AS "totalSeconds"
+      FROM activities a
+      INNER JOIN categories c ON c.id = a.category_id
+      WHERE a.start_time >= $1
+        AND a.start_time < $2
+        AND a.end_time IS NOT NULL
+        AND c.name <> 'Uncategorized'
+      GROUP BY a.title, c.name
+      ORDER BY "totalSeconds" DESC, a.title ASC, c.name ASC
+    `,
+    [rangeStart.toISOString(), rangeEndExclusive.toISOString()],
+  );
+
+  return rows.map((row) => {
+    const totalSeconds = Number(row.totalSeconds) || 0;
+
+    return {
+      name: row.name,
+      category: row.category,
+      tone: categoryToneMap[row.category] || "focus",
+      totalSeconds,
+      timeLabel: formatSecondsForTrend(totalSeconds),
+    };
+  });
+};
+
+// Builds the seven day bar-series that the trends page week mode renders client-side.
 const fetchWeeklyBars = async (rangeStart, rangeEndExclusive) => {
   const { rows } = await query(
     `
@@ -215,6 +261,7 @@ const fetchWeeklyBars = async (rangeStart, rangeEndExclusive) => {
   });
 };
 
+// Packages weekly totals, labels, and bar heights for the trends template and `/api/trends`.
 const buildWeekTrendData = async (referenceDate = new Date()) => {
   const weekStart = getStartOfWeekSunday(referenceDate);
   const weekEndExclusive = new Date(weekStart);
@@ -267,6 +314,7 @@ const buildWeekTrendData = async (referenceDate = new Date()) => {
   };
 };
 
+// Packages daily totals for the home/trends donut views and keeps the label in sync with the selected day.
 const buildDayTrendData = async (referenceDate = new Date()) => {
   const dayStart = getStartOfDay(referenceDate);
   const dayEndExclusive = new Date(dayStart);
@@ -276,6 +324,7 @@ const buildDayTrendData = async (referenceDate = new Date()) => {
     dayStart,
     dayEndExclusive,
   );
+  const activities = await fetchActivityTotalsByRange(dayStart, dayEndExclusive);
   const totalSeconds = categories.reduce(
     (sum, category) => sum + category.totalSeconds,
     0,
@@ -290,9 +339,11 @@ const buildDayTrendData = async (referenceDate = new Date()) => {
     totalLabel: "Total time",
     totalTime: formatSecondsForTrend(totalSeconds),
     categories,
+    activities,
   };
 };
 
+// Generates the CSS conic-gradient string used by the home donut chart.
 const buildDonutGradient = (categories) => {
   const segments = [];
   let accumulatedDegrees = 0;
@@ -326,6 +377,7 @@ const buildDonutGradient = (categories) => {
   return segments.join(", ");
 };
 
+// Home uses this to render today's donut and legend without needing client-side chart code.
 const fetchTodayInsight = async () => {
   const { rows } = await query(
     `
@@ -378,6 +430,7 @@ const fetchTodayInsight = async () => {
   };
 };
 
+// Converts grouped SQL rows into the card shape used by continue activity and timer resolution.
 const mapActivityRow = (row) => ({
   id: Number(row.id),
   name: row.name,
@@ -388,6 +441,7 @@ const mapActivityRow = (row) => ({
 
 let completionColumnEnsured = false;
 
+// Older databases may not have `is_completed`; this guard upgrades once before grouped queries rely on it.
 const ensureCompletionColumn = async () => {
   if (completionColumnEnsured) {
     return;
@@ -403,6 +457,7 @@ const ensureCompletionColumn = async () => {
   completionColumnEnsured = true;
 };
 
+// Continue activity uses this grouped query so one card represents all unfinished sessions for a title/category pair.
 const fetchActivityGroups = async () => {
   await ensureCompletionColumn();
 
@@ -425,6 +480,7 @@ const fetchActivityGroups = async () => {
   return rows.map(mapActivityRow);
 };
 
+// Resolves a grouped activity from any session id so timer/summary routes can reopen the correct aggregate record.
 const fetchActivityGroupById = async (activityId) => {
   const { rows } = await query(
     `
@@ -454,6 +510,7 @@ const fetchActivityGroupById = async (activityId) => {
   return mapActivityRow(rows[0]);
 };
 
+// Create/timer/summary flows use this fallback when they only know the activity title and category name.
 const fetchActivityGroupByNameCategory = async (name, category) => {
   const { rows } = await query(
     `
@@ -478,6 +535,7 @@ const fetchActivityGroupByNameCategory = async (name, category) => {
   return mapActivityRow(rows[0]);
 };
 
+// Summary inserts depend on a valid category id, so this resolves the requested name with a safe fallback.
 const resolveCategory = async (categoryName) => {
   const exactMatch = await query(
     `
@@ -509,6 +567,7 @@ const resolveCategory = async (categoryName) => {
   return { id: 1, name: "Uncategorized" };
 };
 
+// Home is fully server-rendered from today's aggregated totals, including the donut gradient and legend order.
 export const renderHome = async (_req, res) => {
   try {
     const { categories, donutGradient } = await fetchTodayInsight();
@@ -523,6 +582,7 @@ export const renderHome = async (_req, res) => {
   }
 };
 
+// Seeds the trends page with both day and week payloads so the first render works before any API calls.
 export const renderTrendsReport = async (_req, res) => {
   try {
     const today = new Date();
@@ -547,6 +607,7 @@ export const renderTrendsReport = async (_req, res) => {
   }
 };
 
+// Arrow navigation on the trends page calls this endpoint for day/week stepping.
 export const getTrendData = async (req, res) => {
   const mode = req.query.mode === "week" ? "week" : "day";
   const parsedDate = parseDateInput(req.query.date);
@@ -568,6 +629,7 @@ export const getTrendData = async (req, res) => {
 
 export const renderContinueActivity = async (_req, res) => {
   try {
+    // Continue view lists grouped activities so one saved card represents all sessions for that title/category.
     const activities = await fetchActivityGroups();
     const activitiesWithIcons = activities.map((activity) => ({
       ...activity,
@@ -585,6 +647,7 @@ export const renderContinueActivity = async (_req, res) => {
 
 export const renderNewActivity = async (_req, res) => {
   try {
+    // New activity uses category rows from the database so the form and icon picker stay aligned with stored categories.
     const { rows } = await query(
       `
         SELECT name
@@ -627,6 +690,7 @@ export const createActivity = async (req, res) => {
       : "Category";
 
   try {
+    // Creating redirects straight to the timer; if the title/category already exists we pass its grouped id forward.
     const existingActivity = await fetchActivityGroupByNameCategory(
       activityName,
       category,
@@ -658,6 +722,7 @@ export const deleteActivity = async (req, res) => {
   try {
     await ensureCompletionColumn();
 
+    // Continue view "delete" marks every session in the grouped activity completed so it disappears from the list.
     const target = await query(
       `
         SELECT title, category_id
@@ -690,6 +755,7 @@ export const deleteActivity = async (req, res) => {
   }
 };
 
+// Summary completion uses this endpoint to hide a grouped activity from continue view without deleting historical sessions.
 export const completeActivity = async (req, res) => {
   const activityId = Number(req.params.id);
 
@@ -743,6 +809,7 @@ export const completeActivity = async (req, res) => {
   }
 };
 
+// Undo from the summary popup calls this to mark the grouped activity active again using the saved completion payload.
 export const restoreActivity = async (req, res) => {
   const activityId = Number(req.body.id);
   const activityTitle =
@@ -833,6 +900,7 @@ export const renderTimerScreen = async (req, res) => {
       : "Category";
 
   try {
+    // Timer can be opened from either a grouped activity id or a name/category pair from the create flow.
     let matchedActivity = null;
 
     if (!Number.isNaN(activityId)) {
@@ -857,6 +925,7 @@ export const renderTimerScreen = async (req, res) => {
     const activityIcon =
       categoryIconMap[resolvedCategory] || categoryIconMap.Focus;
 
+    // The timer always starts at zero; total accumulated time is shown separately in later summary screens.
     res.render("timer", {
       pageTitle: "Timer Screen",
       activityId: resolvedActivityId,
@@ -889,6 +958,7 @@ export const renderActivitySummary = async (req, res) => {
   const sessionSeconds = parseTimeToSeconds(sessionTime);
 
   try {
+    // Summary resolves the same grouped activity the timer was running against so totals roll up correctly.
     let matchedActivity = null;
 
     if (!Number.isNaN(activityId)) {
@@ -910,6 +980,7 @@ export const renderActivitySummary = async (req, res) => {
     const displayName = matchedActivity ? matchedActivity.name : activityName;
     let displayCategory = matchedActivity ? matchedActivity.category : category;
 
+    // Stopping the timer persists a completed session row, then rehydrates the grouped totals for display.
     if (sessionSeconds > 0) {
       const resolvedCategory = await resolveCategory(displayCategory);
       displayCategory = resolvedCategory.name;
@@ -957,6 +1028,7 @@ export const renderActivitySummary = async (req, res) => {
     const displayIcon =
       categoryIconMap[displayCategory] || categoryIconMap.Focus;
 
+    // The summary template seeds both the animation state and the save/complete popup actions from this payload.
     res.render("activity-summary", {
       pageTitle: "Activity Summary",
       activityId: summaryActivityId,

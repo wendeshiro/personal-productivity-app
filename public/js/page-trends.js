@@ -1,4 +1,5 @@
 (() => {
+  // These nodes are the handoff points between the server-rendered trends template and the client updates.
   const documentNode = globalThis.document;
   const canvas = documentNode.getElementById("trend-pie-chart");
   const tooltip = documentNode.getElementById("trend-pie-tooltip");
@@ -81,6 +82,7 @@
       totalLabel: "Total time",
       totalTime: "00:00",
       categories: fallbackCategories,
+      activities: [],
     },
     week: {
       dateLabel: "",
@@ -157,9 +159,20 @@
     hideWeekTooltip();
   };
 
+  // Both the legend and the charts read from the same normalized category payload.
   const getModeCategories = (mode) =>
     normalizeCategories(pageData?.[mode]?.categories);
 
+  // Day mode lists activities, while week mode continues to list category totals.
+  const getModeLegendItems = (mode) => {
+    if (mode === "day") {
+      return normalizeCategories(pageData?.day?.activities);
+    }
+
+    return getModeCategories("week");
+  };
+
+  // Day mode redraws from the latest fetched payload instead of the initial page HTML.
   const refreshDayChartData = () => {
     dayChartData = getModeCategories("day").filter(
       (item) => item.totalSeconds > 0,
@@ -192,6 +205,7 @@
     });
   };
 
+  // Week mode rebuilds the bar chart each time the date range changes.
   const renderWeekBars = () => {
     const bars = Array.isArray(pageData.week?.bars) ? pageData.week.bars : [];
     const activeTotals = bars
@@ -272,6 +286,7 @@
     });
   };
 
+  // Canvas drawing is only used for day mode; week mode is regular DOM bars.
   const drawDayChart = () => {
     const width = Math.round(canvas.clientWidth || 360);
     const height = Math.round(canvas.clientHeight || 360);
@@ -341,6 +356,7 @@
     });
   };
 
+  // Donut tooltips anchor to the active slice, not the pointer, so they stay stable while hovering.
   const setTooltipPositionAtSliceMidpoint = (segment) => {
     const bounds = canvas.getBoundingClientRect();
     const midAngle = (segment.start + segment.end) / 2;
@@ -356,6 +372,7 @@
     tooltip.style.top = `${Math.max(8, Math.min(centeredTop, maxTop))}px`;
   };
 
+  // Hit-testing turns the cursor position into the matching donut segment.
   const findCategoryAtPoint = (clientX, clientY) => {
     const bounds = canvas.getBoundingClientRect();
     const x = clientX - bounds.left;
@@ -398,6 +415,7 @@
     setTooltipPositionAtSliceMidpoint(activeSegment);
   };
 
+  // This is the main UI switcher used by tab clicks and by fetched date updates.
   const setActiveMode = (mode) => {
     activeMode = mode === "week" ? "week" : "day";
 
@@ -408,12 +426,12 @@
     });
 
     const modeData = pageData[activeMode] || pageData.day;
-    const categories = getModeCategories(activeMode);
+    const legendItems = getModeLegendItems(activeMode);
 
     trendDateLabel.textContent = modeData.dateLabel || "";
     trendTotalLabel.textContent = modeData.totalLabel || "Total time";
     trendTotalTime.textContent = modeData.totalTime || "00:00";
-    renderLegend(categories);
+    renderLegend(legendItems);
 
     if (activeMode === "day") {
       refreshDayChartData();
@@ -437,6 +455,7 @@
     drawDayChart();
   };
 
+  // Arrow labels change with the active mode so accessibility matches the current navigation step.
   const updateArrowLabels = () => {
     previousButton.setAttribute(
       "aria-label",
@@ -448,6 +467,7 @@
     );
   };
 
+  // All date stepping goes through the same backend endpoint so day/week stay in sync with the database.
   const fetchTrendData = async (mode, dateValue) => {
     const searchParams = new URLSearchParams({
       mode,
@@ -472,6 +492,7 @@
     }
   };
 
+  // Stores the fetched payload locally so charts, labels, and legend can all rerender from one source of truth.
   const loadModeData = async (mode, dateValue) => {
     const fetched = await fetchTrendData(mode, dateValue);
 
@@ -492,6 +513,7 @@
     return true;
   };
 
+  // Left/right arrows call this with `-1` or `1`, then mode decides whether that means days or weeks.
   const shiftByDirection = async (direction) => {
     const dayDelta = activeMode === "week" ? 7 : 1;
     const nextDate = shiftDateByDays(currentReferenceDate, direction * dayDelta);

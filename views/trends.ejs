@@ -19,6 +19,7 @@
         <section class="trends-content" aria-labelledby="trends-title">
           <h1 id="trends-title">Trends Report</h1>
 
+          <% /* JS reads `data-range` to swap between donut/day and bar/week render paths. */ %>
           <div class="trend-range-toggle" role="tablist" aria-label="Date range">
             <button
               type="button"
@@ -40,6 +41,7 @@
             </button>
           </div>
 
+          <% /* Arrow buttons call `/api/trends` and step by one day or one week depending on the active tab. */ %>
           <div class="trend-date-row">
             <button
               type="button"
@@ -61,6 +63,7 @@
           </div>
 
           <section class="trend-chart-section" aria-label="Trends chart">
+            <% /* Day mode draws the donut on canvas using the seeded `trendData.day` payload. */ %>
             <div class="trend-pie-wrap" id="trend-day-chart">
               <canvas id="trend-pie-chart" width="360" height="360"></canvas>
               <div class="trend-tooltip is-hidden" id="trend-pie-tooltip">
@@ -69,6 +72,7 @@
               </div>
             </div>
 
+            <% /* Week mode starts hidden and is populated from `trendData.week.bars` by `page-trends.js`. */ %>
             <div class="trend-week-chart is-hidden" id="trend-week-chart" aria-hidden="true">
               <div class="trend-week-bars" id="trend-week-bars">
                 <% trendData.week.bars.forEach((bar) => { %>
@@ -91,15 +95,16 @@
             <p class="trend-total-time" id="trend-total-time"><%= trendTotalTime %></p>
           </section>
 
-          <section class="trend-legend-card" aria-label="Category breakdown">
+          <% /* Day mode seeds this list with activity totals; week mode replaces it with category totals after hydration. */ %>
+          <section class="trend-legend-card" aria-label="Trend breakdown">
             <ul class="trend-legend-list" id="trend-legend-list">
-              <% chartCategories.forEach((category) => { %>
+              <% trendData.day.activities.forEach((activity) => { %>
                 <li>
                   <div class="trend-legend-main">
-                    <span class="trend-dot trend-dot--<%= category.tone %>"></span>
-                    <span class="trend-category-name"><%= category.name %></span>
+                    <span class="trend-dot trend-dot--<%= activity.tone %>"></span>
+                    <span class="trend-category-name"><%= activity.name %></span>
                   </div>
-                  <strong class="trend-category-time"><%= category.timeLabel %></strong>
+                  <strong class="trend-category-time"><%= activity.timeLabel %></strong>
                 </li>
               <% }) %>
             </ul>
@@ -111,6 +116,7 @@
     <script id="trend-chart-data" type="application/json">
       <%- JSON.stringify(chartCategories) %>
     </script>
+    <% /* `page-trends.js` hydrates from this payload before it starts fetching new dates. */ %>
     <script id="trend-page-data" type="application/json">
       <%- JSON.stringify(trendData) %>
     </script>

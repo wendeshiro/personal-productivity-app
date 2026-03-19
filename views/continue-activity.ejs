@@ -19,6 +19,7 @@
         <section class="continue-activity-content" aria-labelledby="continue-activity-title">
           <h1 id="continue-activity-title">Select an Activity</h1>
 
+          <% /* Cards are grouped activity summaries from `renderContinueActivity`, not individual timer sessions. */ %>
           <section class="continue-activity-list" aria-label="Saved activities">
             <div class="activity-list-container">
               <% activities.forEach((activity, index) => { %>
@@ -48,6 +49,7 @@
                     </div>
                   </div>
 
+                  <% /* `page-continue-activity.js` reveals this action row when a card is expanded. */ %>
                   <div class="activity-actions-row">
                     <a
                       class="continue-btn"

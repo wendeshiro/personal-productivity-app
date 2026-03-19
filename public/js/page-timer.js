@@ -1,4 +1,5 @@
 (() => {
+  // These nodes bridge the rendered timer screen with the client-side stopwatch and summary form payload.
   const timerDisplay = globalThis.document.getElementById("timer-display");
   const toggleButton = globalThis.document.getElementById("timer-toggle-btn");
   const toggleLabel = globalThis.document.getElementById("timer-toggle-label");
@@ -28,6 +29,7 @@
     return;
   }
 
+  // Summary posts the elapsed time as `HH:MM:SS`, so both timer persistence and form submission use the same format.
   const parseTimerValue = (value) => {
     const parts = value.split(":").map((part) => Number(part));
 
@@ -76,6 +78,7 @@
     category: categoryInput.value.trim(),
   };
 
+  // Resume only applies when the stored timer belongs to the same grouped activity shown on this screen.
   const isSameActivity = (savedState) => {
     if (!savedState) {
       return false;
@@ -102,6 +105,7 @@
     globalThis.localStorage.removeItem(TIMER_STORAGE_KEY);
   };
 
+  // Stored timer state is shared with the home/new/continue flows through `shared-active-timer-redirect.js`.
   let timerState = {
     activityId: currentActivity.activityId,
     activityName: currentActivity.activityName,
@@ -147,6 +151,7 @@
   timerDisplay.textContent = formatTimerValue(getElapsedSeconds());
   let intervalId = null;
 
+  // Toggle keeps DOM, localStorage, and elapsed-time math in sync so pausing/resuming survives navigation.
   const setRunning = (isRunning) => {
     toggleLabel.textContent = isRunning ? "Pause" : "Start";
     toggleIcon.src = isRunning ? "/image/pause.svg" : "/image/start.svg";
@@ -189,6 +194,7 @@
     setRunning(intervalId === null);
   });
 
+  // Stop freezes the current elapsed value into the form and clears resume state before `/activities/summary` loads.
   stopForm.addEventListener("submit", () => {
     sessionTimeInput.value = formatTimerValue(getElapsedSeconds());
     clearState();

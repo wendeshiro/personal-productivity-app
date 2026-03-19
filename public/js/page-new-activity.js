@@ -1,4 +1,5 @@
 (() => {
+  // Keeps the category preview icon synced with the current select option in `new-activity.ejs`.
   const categorySelect =
     globalThis.document.getElementById("activity-category");
   const iconWrap = globalThis.document.getElementById("category-icon-wrap");
@@ -8,6 +9,7 @@
     return;
   }
 
+  // Each option carries its icon path in `data-icon`, so the preview updates without another request.
   const updateCategoryIcon = () => {
     const selectedOption = categorySelect.options[categorySelect.selectedIndex];
     const icon = selectedOption.dataset.icon;

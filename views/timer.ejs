@@ -21,6 +21,7 @@
         </section>
 
         <section class="timer-content" aria-labelledby="timer-activity-title">
+          <% /* Controller-resolved activity details let the timer work for both newly created and continued activities. */ %>
           <section class="timer-activity-summary" aria-label="Current activity">
             <span class="timer-category-icon">
               <img src="<%= activityIcon %>" alt="" />
@@ -36,6 +37,7 @@
           </section>
 
           <section class="timer-actions" aria-label="Timer actions">
+            <% /* `page-timer.js` owns the start/pause state and mirrors it into localStorage for resume behavior. */ %>
             <button
               type="button"
               id="timer-toggle-btn"
@@ -46,6 +48,7 @@
               <span id="timer-toggle-label">Start</span>
             </button>
 
+            <% /* Stop posts the elapsed session time into `/activities/summary`, which persists the session and renders the summary screen. */ %>
             <form
               id="timer-stop-form"
               action="/activities/summary"

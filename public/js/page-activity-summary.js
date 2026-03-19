@@ -1,4 +1,5 @@
 (() => {
+  // Summary DOM nodes carry both the animated total-time display and the popup-driven save/complete actions.
   const summaryTotal = globalThis.document.getElementById("summary-total-time");
   const sessionTime = globalThis.document.getElementById(
     "summary-session-time",
@@ -15,6 +16,7 @@
     return;
   }
 
+  // The template passes activity metadata through `data-*` attributes so this script can stay plain JS.
   const parsedActivityId = Number(summaryNode.dataset.activityId);
   const parsedActiveDays = Number(summaryNode.dataset.activityDays);
   const summaryActivity = {
@@ -50,6 +52,7 @@
     return `${hours}:${minutes}:${seconds}`;
   };
 
+  // Replays the session add-on into the new total so the summary feels like a transition from the timer screen.
   const animateTotalTime = (fromSeconds, toSeconds, durationMs) => {
     if (fromSeconds === toSeconds) {
       summaryTotal.textContent = formatSecondsToTime(toSeconds);
@@ -94,6 +97,7 @@
     return;
   }
 
+  // Save-progress does not call the backend here; the grouped activity remains available and the popup handles navigation.
   ongoingButton.addEventListener("click", () => {
     ongoingPopup.classList.remove("is-hidden");
     globalThis.document.body.classList.add("is-popup-open");
@@ -115,6 +119,7 @@
     }
   };
 
+  // Completing calls the grouped activity completion endpoint, then keeps the response payload for undo.
   completedButton.addEventListener("click", async () => {
     if (
       typeof summaryActivity.id !== "number" ||
@@ -151,6 +156,7 @@
   });
 
   if (undoButton) {
+    // Undo reopens the grouped activity in continue view by calling the restore endpoint with the saved completion payload.
     undoButton.addEventListener("click", async () => {
       if (!removedActivityPayload) {
         closePopup(completedPopup);
