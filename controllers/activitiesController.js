@@ -1,45 +1,5 @@
 import { query } from "../db/client.js";
 
-/*
-const activities = [
-  {
-    id: 1,
-    name: "Deep Work Session",
-    category: "Focus",
-    activeDays: 10,
-    totalTime: "00:20:00",
-  },
-  {
-    id: 2,
-    name: "Weekly Agenda",
-    category: "Planning",
-    activeDays: 5,
-    totalTime: "00:20:00",
-  },
-  {
-    id: 3,
-    name: "Clear Inbox",
-    category: "Life Admin",
-    activeDays: 1,
-    totalTime: "00:20:00",
-  },
-  {
-    id: 4,
-    name: "Course Review",
-    category: "Learning",
-    activeDays: 2,
-    totalTime: "00:20:00",
-  },
-  {
-    id: 5,
-    name: "Sketch Practice",
-    category: "Creative",
-    activeDays: 7,
-    totalTime: "00:20:00",
-  },
-];
-*/
-
 const categoryIconMap = {
   Focus: "/image/focus-fill.svg",
   Planning: "/image/plan-fill.svg",
@@ -262,7 +222,10 @@ const buildWeekTrendData = async (referenceDate = new Date()) => {
   const weekEndDisplay = new Date(weekStart);
   weekEndDisplay.setDate(weekStart.getDate() + 6);
 
-  const categories = await fetchCategoryTotalsByRange(weekStart, weekEndExclusive);
+  const categories = await fetchCategoryTotalsByRange(
+    weekStart,
+    weekEndExclusive,
+  );
   const bars = await fetchWeeklyBars(weekStart, weekEndExclusive);
   const activeTotals = bars
     .map((bar) => Number(bar.totalSeconds) || 0)
@@ -309,7 +272,10 @@ const buildDayTrendData = async (referenceDate = new Date()) => {
   const dayEndExclusive = new Date(dayStart);
   dayEndExclusive.setDate(dayStart.getDate() + 1);
   const today = getStartOfDay(new Date());
-  const categories = await fetchCategoryTotalsByRange(dayStart, dayEndExclusive);
+  const categories = await fetchCategoryTotalsByRange(
+    dayStart,
+    dayEndExclusive,
+  );
   const totalSeconds = categories.reduce(
     (sum, category) => sum + category.totalSeconds,
     0,
@@ -346,7 +312,7 @@ const buildDonutGradient = (categories) => {
   });
 
   if (segments.length === 0) {
-    return "var(--focus) 0deg 360deg";
+    return "#d8d3ce 0deg 360deg";
   }
 
   if (accumulatedDegrees < 360) {
