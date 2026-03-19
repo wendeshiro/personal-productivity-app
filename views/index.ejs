@@ -57,10 +57,13 @@
           </div>
 
           <div class="trends-action">
-            <%- include("partials/button", {
-              label: "View Trends Report",
-              className: "view-trends-btn",
-            }) %>
+            <form action="/trends" method="get">
+              <%- include("partials/button", {
+                label: "View Trends Report",
+                className: "view-trends-btn",
+                type: "submit",
+              }) %>
+            </form>
           </div>
         </section>
       </main>

@@ -91,6 +91,242 @@ const formatSecondsToTime = (totalSeconds) => {
   return `${hours}:${minutes}:${seconds}`;
 };
 
+const formatSecondsForTrend = (totalSeconds) => {
+  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = String(Math.floor((safeSeconds % 3600) / 60)).padStart(
+    2,
+    "0",
+  );
+  const seconds = String(safeSeconds % 60).padStart(2, "0");
+
+  if (hours > 0) {
+    return `${hours}:${minutes}:${seconds}`;
+  }
+
+  return `${minutes}:${seconds}`;
+};
+
+const formatOrdinalDay = (day) => {
+  const mod100 = day % 100;
+
+  if (mod100 >= 11 && mod100 <= 13) {
+    return `${day}th`;
+  }
+
+  switch (day % 10) {
+    case 1:
+      return `${day}st`;
+    case 2:
+      return `${day}nd`;
+    case 3:
+      return `${day}rd`;
+    default:
+      return `${day}th`;
+  }
+};
+
+const formatTrendDateLabel = (dateValue) => {
+  const dayWithOrdinal = formatOrdinalDay(dateValue.getDate());
+  const monthLabel = dateValue.toLocaleString("en-US", { month: "short" });
+
+  return `Today - ${monthLabel} ${dayWithOrdinal}`;
+};
+
+const formatMonthDayWithOrdinal = (dateValue) => {
+  const monthLabel = dateValue.toLocaleString("en-US", { month: "short" });
+  const dayWithOrdinal = formatOrdinalDay(dateValue.getDate());
+
+  return `${monthLabel} ${dayWithOrdinal}`;
+};
+
+const formatMonthDayShort = (dateValue) =>
+  `${dateValue.getMonth() + 1}/${dateValue.getDate()}`;
+
+const formatDateKey = (dateValue) =>
+  `${dateValue.getFullYear()}-${String(dateValue.getMonth() + 1).padStart(
+    2,
+    "0",
+  )}-${String(dateValue.getDate()).padStart(2, "0")}`;
+
+const parseDateInput = (dateValue) => {
+  if (typeof dateValue !== "string") {
+    return null;
+  }
+
+  const match = dateValue.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (
+    Number.isNaN(parsedDate.getTime()) ||
+    parsedDate.getFullYear() !== year ||
+    parsedDate.getMonth() !== month - 1 ||
+    parsedDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  parsedDate.setHours(0, 0, 0, 0);
+  return parsedDate;
+};
+
+const getStartOfDay = (dateValue) => {
+  const start = new Date(dateValue);
+  start.setHours(0, 0, 0, 0);
+  return start;
+};
+
+const getStartOfWeekSunday = (dateValue) => {
+  const start = new Date(dateValue);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - start.getDay());
+  return start;
+};
+
+const fetchCategoryTotalsByRange = async (rangeStart, rangeEndExclusive) => {
+  const { rows } = await query(
+    `
+      SELECT
+        c.name,
+        COALESCE(SUM(a.duration_seconds), 0)::INTEGER AS "totalSeconds"
+      FROM categories c
+      LEFT JOIN activities a
+        ON a.category_id = c.id
+       AND a.start_time >= $1
+       AND a.start_time < $2
+       AND a.end_time IS NOT NULL
+      WHERE c.name <> 'Uncategorized'
+      GROUP BY c.id, c.name
+      ORDER BY c.id
+    `,
+    [rangeStart.toISOString(), rangeEndExclusive.toISOString()],
+  );
+
+  const totalsByCategory = new Map(
+    rows.map((row) => [row.name, Number(row.totalSeconds) || 0]),
+  );
+
+  return homeCategoryOrder.map((name) => ({
+    name,
+    tone: categoryToneMap[name],
+    totalSeconds: totalsByCategory.get(name) || 0,
+    timeLabel: formatSecondsForTrend(totalsByCategory.get(name) || 0),
+  }));
+};
+
+const fetchWeeklyBars = async (rangeStart, rangeEndExclusive) => {
+  const { rows } = await query(
+    `
+      SELECT
+        DATE(a.start_time)::TEXT AS "dayKey",
+        COALESCE(SUM(a.duration_seconds), 0)::INTEGER AS "totalSeconds"
+      FROM activities a
+      WHERE a.start_time >= $1
+        AND a.start_time < $2
+        AND a.end_time IS NOT NULL
+      GROUP BY DATE(a.start_time)
+      ORDER BY "dayKey"
+    `,
+    [rangeStart.toISOString(), rangeEndExclusive.toISOString()],
+  );
+
+  const totalsByDay = new Map(
+    rows.map((row) => [String(row.dayKey), Number(row.totalSeconds) || 0]),
+  );
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(rangeStart);
+    day.setDate(rangeStart.getDate() + index);
+    const dayKey = formatDateKey(day);
+    const totalSeconds = totalsByDay.get(dayKey) || 0;
+
+    return {
+      label: formatMonthDayShort(day),
+      totalSeconds,
+      timeLabel: formatSecondsForTrend(totalSeconds),
+    };
+  });
+};
+
+const buildWeekTrendData = async (referenceDate = new Date()) => {
+  const weekStart = getStartOfWeekSunday(referenceDate);
+  const weekEndExclusive = new Date(weekStart);
+  weekEndExclusive.setDate(weekStart.getDate() + 7);
+  const weekEndDisplay = new Date(weekStart);
+  weekEndDisplay.setDate(weekStart.getDate() + 6);
+
+  const categories = await fetchCategoryTotalsByRange(weekStart, weekEndExclusive);
+  const bars = await fetchWeeklyBars(weekStart, weekEndExclusive);
+  const activeTotals = bars
+    .map((bar) => Number(bar.totalSeconds) || 0)
+    .filter((seconds) => seconds > 0);
+  const maxTotalSeconds =
+    activeTotals.length > 0 ? Math.max(...activeTotals) : 1;
+  const maxBarHeight = 320;
+  const minActiveHeight = 40;
+  const placeholderHeight = 24;
+  const barsWithHeights = bars.map((bar) => {
+    const totalSeconds = Number(bar.totalSeconds) || 0;
+    const barHeight =
+      totalSeconds > 0
+        ? Math.round(
+            minActiveHeight +
+              (totalSeconds / maxTotalSeconds) *
+                (maxBarHeight - minActiveHeight),
+          )
+        : placeholderHeight;
+
+    return {
+      ...bar,
+      barHeight,
+      isActive: totalSeconds > 0,
+    };
+  });
+  const totalSeconds = categories.reduce(
+    (sum, category) => sum + category.totalSeconds,
+    0,
+  );
+
+  return {
+    referenceDate: formatDateKey(referenceDate),
+    dateLabel: `${formatMonthDayWithOrdinal(weekStart)} - ${formatMonthDayWithOrdinal(weekEndDisplay)}`,
+    totalLabel: "Weekly Total",
+    totalTime: formatSecondsForTrend(totalSeconds),
+    categories,
+    bars: barsWithHeights,
+  };
+};
+
+const buildDayTrendData = async (referenceDate = new Date()) => {
+  const dayStart = getStartOfDay(referenceDate);
+  const dayEndExclusive = new Date(dayStart);
+  dayEndExclusive.setDate(dayStart.getDate() + 1);
+  const today = getStartOfDay(new Date());
+  const categories = await fetchCategoryTotalsByRange(dayStart, dayEndExclusive);
+  const totalSeconds = categories.reduce(
+    (sum, category) => sum + category.totalSeconds,
+    0,
+  );
+  const isToday = formatDateKey(dayStart) === formatDateKey(today);
+
+  return {
+    referenceDate: formatDateKey(dayStart),
+    dateLabel: isToday
+      ? formatTrendDateLabel(dayStart)
+      : formatMonthDayWithOrdinal(dayStart),
+    totalLabel: "Total time",
+    totalTime: formatSecondsForTrend(totalSeconds),
+    categories,
+  };
+};
+
 const buildDonutGradient = (categories) => {
   const segments = [];
   let accumulatedDegrees = 0;
@@ -318,6 +554,49 @@ export const renderHome = async (_req, res) => {
     });
   } catch {
     res.status(500).send("Failed to load home page.");
+  }
+};
+
+export const renderTrendsReport = async (_req, res) => {
+  try {
+    const today = new Date();
+    const dayData = await buildDayTrendData(today);
+    const weekData = await buildWeekTrendData(today);
+
+    const trendData = {
+      day: dayData,
+      week: weekData,
+    };
+
+    res.render("trends", {
+      pageTitle: "Trend Report",
+      chartCategories: trendData.day.categories,
+      trendDateLabel: trendData.day.dateLabel,
+      trendTotalTime: trendData.day.totalTime,
+      trendTotalLabel: trendData.day.totalLabel,
+      trendData,
+    });
+  } catch {
+    res.status(500).send("Failed to load trends report.");
+  }
+};
+
+export const getTrendData = async (req, res) => {
+  const mode = req.query.mode === "week" ? "week" : "day";
+  const parsedDate = parseDateInput(req.query.date);
+  const referenceDate = parsedDate || getStartOfDay(new Date());
+
+  try {
+    if (mode === "week") {
+      const weekData = await buildWeekTrendData(referenceDate);
+      res.json(weekData);
+      return;
+    }
+
+    const dayData = await buildDayTrendData(referenceDate);
+    res.json(dayData);
+  } catch {
+    res.status(500).json({ message: "Failed to load trend data." });
   }
 };
 
