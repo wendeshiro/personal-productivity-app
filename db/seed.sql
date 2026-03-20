@@ -246,22 +246,22 @@ VALUES
     '2026-03-19 15:45:00-07',
     TRUE
   ),
-  (
-    'Read Node.js docs',
-    5,
-    'Express middleware patterns',
-    '2026-03-20 10:30:00-07',
-    '2026-03-20 11:20:00-07',
-    TRUE
-  ),
-  (
-    'Home page iteration',
-    6,
-    'Tweaked card spacing',
-    '2026-03-20 13:30:00-07',
-    '2026-03-20 14:30:00-07',
-    TRUE
-  ),
+  -- (
+  --   'Read Node.js docs',
+  --   5,
+  --   'Express middleware patterns',
+  --   '2026-03-20 10:30:00-07',
+  --   '2026-03-20 11:20:00-07',
+  --   TRUE
+  -- ),
+  -- (
+  --   'Home page iteration',
+  --   6,
+  --   'Tweaked card spacing',
+  --   '2026-03-20 13:30:00-07',
+  --   '2026-03-20 14:30:00-07',
+  --   TRUE
+  -- ),
   (
     'Weekly review and planning',
     3,
@@ -694,22 +694,22 @@ VALUES
     '2026-03-19 18:05:00-07',
     TRUE
   ),
-  (
-    'Focus tune-up block',
-    2,
-    NULL,
-    '2026-03-20 17:00:00-07',
-    '2026-03-20 17:25:00-07',
-    TRUE
-  ),
-  (
-    'Planning touchpoint',
-    3,
-    NULL,
-    '2026-03-20 17:40:00-07',
-    '2026-03-20 18:05:00-07',
-    TRUE
-  ),
+  -- (
+  --   'Focus tune-up block',
+  --   2,
+  --   NULL,
+  --   '2026-03-20 17:00:00-07',
+  --   '2026-03-20 17:25:00-07',
+  --   TRUE
+  -- ),
+  -- (
+  --   'Planning touchpoint',
+  --   3,
+  --   NULL,
+  --   '2026-03-20 17:40:00-07',
+  --   '2026-03-20 18:05:00-07',
+  --   TRUE
+  -- ),
   (
     'Focus checkpoint',
     2,
