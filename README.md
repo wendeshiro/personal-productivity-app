@@ -4,44 +4,24 @@ A personal productivity web app to track focused work sessions, categorize time 
 
 ## Table of Contents
 - [Personal Productivity App](#personal-productivity-app)
-  - [Table of Contents](#table-of-contents)
-  - [1. Run Locally](#1-run-locally)
-    - [Setup](#setup)
-    - [Useful commands](#useful-commands)
-  - [2. Team Contributions](#2-team-contributions)
-    - [Wende](#wende)
-    - [Jisoo](#jisoo)
-    - [Yejin](#yejin)
-    - [Lucie](#lucie)
-  - [3. Route Map](#3-route-map)
-    - [View routes](#view-routes)
-    - [Action routes](#action-routes)
-  - [4. Project Structure](#4-project-structure)
-    - [Folder purposes](#folder-purposes)
-    - [File purposes](#file-purposes)
-  - [5. Tech Stack](#5-tech-stack)
-  - [6. Developer Plugins + Commit Naming](#6-developer-plugins--commit-naming)
-    - [Recommended editor plugins](#recommended-editor-plugins)
-    - [Commit naming convention (Conventional Commits)](#commit-naming-convention-conventional-commits)
-  - [7. Branch Naming Convention](#7-branch-naming-convention)
-  - [8. Database Schema Diagram](#8-database-schema-diagram)
-  - [9. Architecture Overview](#9-architecture-overview)
-    - [Notes](#notes)
-  - [10. Deploy on Render](#10-deploy-on-render)
-    - [Option A (Recommended): Blueprint + External DB (`render.yaml`)](#option-a-recommended-blueprint--external-db-renderyaml)
-    - [Option B: Manual Setup in Render Dashboard](#option-b-manual-setup-in-render-dashboard)
-      - [Step 1: Push code to GitHub](#step-1-push-code-to-github)
-      - [Step 2: Create Web Service](#step-2-create-web-service)
-      - [Step 3: Set `DATABASE_URL`](#step-3-set-database_url)
-      - [Step 4: Verify](#step-4-verify)
-  - [11. Use Aiven PostgreSQL with Render](#11-use-aiven-postgresql-with-render)
-    - [Step 1: Create Aiven PostgreSQL (Free)](#step-1-create-aiven-postgresql-free)
-    - [Step 2: Copy the Aiven Service URI](#step-2-copy-the-aiven-service-uri)
-    - [Step 3: Initialize schema + seed on Aiven](#step-3-initialize-schema--seed-on-aiven)
-    - [Step 4: Link Aiven to Render](#step-4-link-aiven-to-render)
-    - [Step 5: Redeploy and verify](#step-5-redeploy-and-verify)
+  - [1. Visit Live App Demo](#1-visit-live-app-demo)
+  - [2. Run Locally](#2-run-locally)
+  - [3. Team Contributions](#3-team-contributions)
+  - [4. Route Map](#4-route-map)
+  - [5. Project Structure](#5-project-structure)
+  - [6. Tech Stack](#6-tech-stack)
+  - [7. Developer Plugins + Commit Naming](#7-developer-plugins--commit-naming)
+  - [8. Branch Naming Convention](#8-branch-naming-convention)
+  - [9. Database Schema Diagram](#9-database-schema-diagram)
+  - [10. Architecture Overview](#10-architecture-overview)
+  - [11. Deploy on Render](#11-deploy-on-render)
+  - [12. Use Aiven PostgreSQL with Render](#12-use-aiven-postgresql-with-render)
 
-## 1. Run Locally
+## 1. Visit Live App Demo
+
+https://personal-productivity-app-tmtc.onrender.com
+
+## 2. Run Locally
 
 ### Setup
 ```bash
@@ -73,7 +53,7 @@ npm run lint:fix   # lint autofix
 npm run format     # prettier format
 ```
 
-## 2. Team Contributions
+## 3. Team Contributions
 
 ### Wende
 - Project repository initialization and structure design
@@ -97,7 +77,7 @@ npm run format     # prettier format
 - Frontend development (HTML, CSS, EJS, JavaScript)
 - User flow creation
 
-## 3. Route Map
+## 4. Route Map
 
 ### View routes
 - `GET /` → Home (`index.ejs`)
@@ -115,7 +95,7 @@ npm run format     # prettier format
 - `POST /activities/:id/complete` → Mark activity group completed (JSON response)
 - `POST /activities/restore` → Restore activity group (set uncompleted)
 
-## 4. Project Structure
+## 5. Project Structure
 
 ```text
 .
@@ -152,7 +132,7 @@ npm run format     # prettier format
 - `.prettierrc`: Prettier formatting config.
 - `.editorconfig`: Editor-level formatting defaults.
 
-## 5. Tech Stack
+## 6. Tech Stack
 
 - Backend: Node.js, Express.js
 - Database: PostgreSQL (`pg` / node-postgres)
@@ -161,7 +141,7 @@ npm run format     # prettier format
 - Code quality/formatting: ESLint, Prettier
 - Dev tooling: Nodemon
 
-## 6. Developer Plugins + Commit Naming
+## 7. Developer Plugins + Commit Naming
 
 ### Recommended editor plugins
 - ESLint (lint diagnostics + auto-fix)
@@ -192,7 +172,7 @@ Examples and usage:
 - `docs(readme): add setup and architecture sections`  
   Use for documentation-only changes.
 
-## 7. Branch Naming Convention
+## 8. Branch Naming Convention
 
 Format:
 ```text
@@ -204,14 +184,14 @@ Examples and usage:
 - `feat/timer-start-stop`
 - `test/activities-controller`
 
-## 8. Database Schema Diagram
+## 9. Database Schema Diagram
 
 ![Database schema diagram](public/image/database-schema.png)
 
 - Relationship: one `category` to many `activities`.
 - Foreign key behavior: deleting a category sets child rows to default category (`id = 1`).
 
-## 9. Architecture Overview
+## 10. Architecture Overview
 
 ```mermaid
 flowchart TD
@@ -226,7 +206,7 @@ flowchart TD
 ### Notes
 - Core database design is implemented in `db/schema.sql` and `db/seed.sql`.
 
-## 10. Deploy on Render
+## 11. Deploy on Render
 
 This project can be deployed as:
 - Render Web Service (Node + Express app)
@@ -264,7 +244,7 @@ Render deploys from a Git repo, so make sure this project is pushed to GitHub fi
 - Check `/healthz`, `/`, and `/activities/timer`
 - If deploy fails, verify `DATABASE_URL` is set and points to the same region/account DB
 
-## 11. Use Aiven PostgreSQL with Render
+## 12. Use Aiven PostgreSQL with Render
 
 ### Step 1: Create Aiven PostgreSQL (Free)
 1. In Aiven Console, create a PostgreSQL service on the free plan
