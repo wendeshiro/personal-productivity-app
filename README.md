@@ -28,7 +28,7 @@ A personal productivity web app to track focused work sessions, categorize time 
   - [9. Architecture Overview](#9-architecture-overview)
     - [Notes](#notes)
   - [10. Deploy on Render](#10-deploy-on-render)
-    - [Option A (Recommended): Blueprint (`render.yaml`)](#option-a-recommended-blueprint-renderyaml)
+    - [Option A (Recommended): Blueprint + External DB (`render.yaml`)](#option-a-recommended-blueprint--external-db-renderyaml)
     - [Option B: Manual Setup in Render Dashboard](#option-b-manual-setup-in-render-dashboard)
       - [Step 1: Push code to GitHub](#step-1-push-code-to-github)
       - [Step 2: Create Web Service](#step-2-create-web-service)
@@ -232,7 +232,7 @@ This project can be deployed as:
 - Render Web Service (Node + Express app)
 - External PostgreSQL database (Aiven recommended)
 
-### Option A (Recommended): Blueprint (`render.yaml`)
+### Option A (Recommended): Blueprint + External DB (`render.yaml`)
 This repo includes `render.yaml` at the project root.
 
 1. Push your latest code to GitHub
