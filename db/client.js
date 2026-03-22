@@ -13,11 +13,13 @@ if (!rawConnectionString) {
 const buildPoolConfig = () => {
   let connectionString = rawConnectionString;
   const poolConfig = {};
+  let hostname = "";
 
   // If ssl params exist in the URL, pg can replace the ssl object from config.
   // We strip URL-level ssl params so explicit config below remains effective.
   try {
     const parsedUrl = new URL(rawConnectionString);
+    hostname = parsedUrl.hostname;
     const sslParams = ["sslmode", "sslcert", "sslkey", "sslrootcert"];
     const hasSslParam = sslParams.some((param) =>
       parsedUrl.searchParams.has(param),
@@ -33,9 +35,19 @@ const buildPoolConfig = () => {
 
   poolConfig.connectionString = connectionString;
 
-  // Useful for managed Postgres providers with self-signed/intermediate cert chains.
-  if (process.env.PG_SSL_REJECT_UNAUTHORIZED === "false") {
-    poolConfig.ssl = { rejectUnauthorized: false };
+  const isAivenHost = hostname.endsWith(".aivencloud.com");
+  const forceSsl =
+    process.env.PG_FORCE_SSL === "true" ||
+    process.env.NODE_ENV === "production" ||
+    isAivenHost;
+
+  if (forceSsl) {
+    // Aiven commonly requires SSL and may fail strict validation without custom CA setup.
+    const rejectUnauthorized = isAivenHost
+      ? process.env.PG_SSL_REJECT_UNAUTHORIZED === "true"
+      : process.env.PG_SSL_REJECT_UNAUTHORIZED !== "false";
+
+    poolConfig.ssl = { rejectUnauthorized };
   }
 
   return poolConfig;
