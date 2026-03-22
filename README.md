@@ -22,6 +22,7 @@ A personal productivity web app to track focused work sessions, categorize time 
   - [7. Database Schema Diagram](#7-database-schema-diagram)
   - [8. Architecture Overview](#8-architecture-overview)
     - [Notes](#notes)
+  - [9. Deploy on Render](#9-deploy-on-render)
 
 ## 1. Run Locally
 
@@ -179,3 +180,59 @@ flowchart TD
 
 ### Notes
 - Core database design is implemented in `db/schema.sql` and `db/seed.sql`.
+
+## 9. Deploy on Render
+
+This project can be deployed as:
+- 1 Render Web Service (Node + Express app)
+- 1 Render PostgreSQL database
+
+### Option A (Recommended): Blueprint (`render.yaml`)
+This repo includes `render.yaml` at the project root.
+
+1. Push your latest code to GitHub
+2. In Render Dashboard, open the **Blueprints** page and click **New Blueprint Instance**
+3. Connect this repository and follow the prompts
+4. Render will create both:
+- Web Service: `personal-productivity-app`
+- PostgreSQL: `personal-productivity-db`
+5. `DATABASE_URL` is auto-wired from the database `connectionString` (internal DB URL) via Blueprint
+
+### Option B: Manual Setup in Render Dashboard
+### Step 1: Push code to GitHub
+Render deploys from a Git repo, so make sure this project is pushed to GitHub first.
+
+### Step 2: Create PostgreSQL on Render
+1. In Render Dashboard: **New +** → **PostgreSQL**
+2. Choose a name/region and create it.
+3. Open DB **Info** page and copy:
+- `Internal Database URL` (for your web service `DATABASE_URL`)
+- `External Database URL` (for one-time schema/seed import from local machine)
+
+### Step 3: Create Web Service
+1. In Render Dashboard: **New +** → **Web Service**
+2. Connect this repository
+3. Set:
+- **Language**: `Node`
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
+- **Environment Variable**: `DATABASE_URL=<your Internal Database URL>`
+
+This project now reads:
+- `PORT` from `process.env.PORT` (required for Render)
+- `DATABASE_URL` from environment variables
+
+### Step 4: Initialize database schema + seed data (one-time)
+Run these on your local machine (with `psql` installed), using the DB's **External Database URL**:
+
+```bash
+psql "<EXTERNAL_DATABASE_URL>" -f db/schema.sql
+psql "<EXTERNAL_DATABASE_URL>" -f db/seed.sql
+```
+
+If your web service started before schema/seed was applied, trigger a manual redeploy (or restart) once.
+
+### Step 5: Verify
+- Open your Render service URL (`https://<service-name>.onrender.com`)
+- Check `/` and `/activities/timer`
+- If deploy fails, verify `DATABASE_URL` is set and points to the same region/account DB
