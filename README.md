@@ -31,10 +31,15 @@ A personal productivity web app to track focused work sessions, categorize time 
     - [Option A (Recommended): Blueprint (`render.yaml`)](#option-a-recommended-blueprint-renderyaml)
     - [Option B: Manual Setup in Render Dashboard](#option-b-manual-setup-in-render-dashboard)
       - [Step 1: Push code to GitHub](#step-1-push-code-to-github)
-      - [Step 2: Create PostgreSQL on Render](#step-2-create-postgresql-on-render)
-      - [Step 3: Create Web Service](#step-3-create-web-service)
-      - [Step 4: Initialize database schema + seed data (one-time)](#step-4-initialize-database-schema--seed-data-one-time)
-      - [Step 5: Verify](#step-5-verify)
+      - [Step 2: Create Web Service](#step-2-create-web-service)
+      - [Step 3: Set `DATABASE_URL`](#step-3-set-database_url)
+      - [Step 4: Verify](#step-4-verify)
+  - [11. Use Aiven PostgreSQL with Render](#11-use-aiven-postgresql-with-render)
+    - [Step 1: Create Aiven PostgreSQL (Free)](#step-1-create-aiven-postgresql-free)
+    - [Step 2: Copy the Aiven Service URI](#step-2-copy-the-aiven-service-uri)
+    - [Step 3: Initialize schema + seed on Aiven](#step-3-initialize-schema--seed-on-aiven)
+    - [Step 4: Link Aiven to Render](#step-4-link-aiven-to-render)
+    - [Step 5: Redeploy and verify](#step-5-redeploy-and-verify)
 
 ## 1. Run Locally
 
@@ -142,7 +147,7 @@ npm run format     # prettier format
 - `app.js`: Express app instance and middleware/router registration.
 - `db/schema.sql`: PostgreSQL table definitions, constraints, and indexes.
 - `db/seed.sql`: Initial categories + demo activity data.
-- `render.yaml`: Render Blueprint config for provisioning the web service and PostgreSQL database.
+- `render.yaml`: Render Blueprint config for provisioning the web service and external `DATABASE_URL`.
 - `eslint.config.js`: ESLint flat config.
 - `.prettierrc`: Prettier formatting config.
 - `.editorconfig`: Editor-level formatting defaults.
@@ -225,7 +230,7 @@ flowchart TD
 
 This project can be deployed as:
 - Render Web Service (Node + Express app)
-- Render PostgreSQL database
+- External PostgreSQL database (Aiven recommended)
 
 ### Option A (Recommended): Blueprint (`render.yaml`)
 This repo includes `render.yaml` at the project root.
@@ -233,47 +238,58 @@ This repo includes `render.yaml` at the project root.
 1. Push your latest code to GitHub
 2. In Render Dashboard, open the **Blueprints** page and click **New Blueprint Instance**
 3. Connect this repository and follow the prompts
-4. Render will create both:
-- Web Service: `personal-productivity-app`
-- PostgreSQL: `personal-productivity-db`
-5. `DATABASE_URL` is auto-wired from the database `connectionString` (internal DB URL) via Blueprint
+4. Render will create the web service: `personal-productivity-app`
+5. Set `DATABASE_URL` in Render Dashboard to your external Postgres URI (Aiven)
 6. Health check path is configured as `/healthz` (lightweight endpoint that does not depend on database queries)
 
 ### Option B: Manual Setup in Render Dashboard
 #### Step 1: Push code to GitHub
 Render deploys from a Git repo, so make sure this project is pushed to GitHub first.
 
-#### Step 2: Create PostgreSQL on Render
-1. In Render Dashboard: **New +** → **PostgreSQL**
-2. Choose a name/region and create it.
-3. Open DB **Info** page and copy:
-- `Internal Database URL` (for your web service `DATABASE_URL`)
-- `External Database URL` (for one-time schema/seed import from local machine)
-
-#### Step 3: Create Web Service
+#### Step 2: Create Web Service
 1. In Render Dashboard: **New +** → **Web Service**
 2. Connect this repository
 3. Set:
 - **Language**: `Node`
 - **Build Command**: `npm install`
 - **Start Command**: `npm start`
-- **Environment Variable**: `DATABASE_URL=<your Internal Database URL>`
 
-This project now reads:
-- `PORT` from `process.env.PORT` (required for Render)
-- `DATABASE_URL` from environment variables
+#### Step 3: Set `DATABASE_URL`
+1. Open your Render web service
+2. Go to **Environment**
+3. Set: `DATABASE_URL=<your external Postgres URI>`
 
-#### Step 4: Initialize database schema + seed data (one-time)
-Run these on your local machine (with `psql` installed), using the DB's **External Database URL**:
+#### Step 4: Verify
+- Open your Render service URL (`https://<service-name>.onrender.com`)
+- Check `/healthz`, `/`, and `/activities/timer`
+- If deploy fails, verify `DATABASE_URL` is set and points to the same region/account DB
+
+## 11. Use Aiven PostgreSQL with Render
+
+### Step 1: Create Aiven PostgreSQL (Free)
+1. In Aiven Console, create a PostgreSQL service on the free plan
+2. Wait until service status becomes running
+
+### Step 2: Copy the Aiven Service URI
+1. Open your Aiven PostgreSQL service
+2. Copy the PostgreSQL connection URI (for example: `postgres://...?...sslmode=require`)
+3. Keep this URI for both schema initialization and Render `DATABASE_URL`
+
+### Step 3: Initialize schema + seed on Aiven
+Run these from your project root on your local machine:
 
 ```bash
-psql "<EXTERNAL_DATABASE_URL>" -f db/schema.sql
-psql "<EXTERNAL_DATABASE_URL>" -f db/seed.sql
+psql "<AIVEN_SERVICE_URI>" -f db/schema.sql
+psql "<AIVEN_SERVICE_URI>" -f db/seed.sql
 ```
 
-If your web service started before schema/seed was applied, trigger a manual redeploy (or restart) once.
+### Step 4: Link Aiven to Render
+1. In Render, open your web service
+2. Go to **Environment**
+3. Set `DATABASE_URL` to your Aiven service URI
+4. Save changes
 
-#### Step 5: Verify
-- Open your Render service URL (`https://<service-name>.onrender.com`)
-- Check `/` and `/activities/timer`
-- If deploy fails, verify `DATABASE_URL` is set and points to the same region/account DB
+### Step 5: Redeploy and verify
+1. Trigger a redeploy in Render
+2. Verify `/healthz` returns `ok`
+3. Verify `/` and `/activities/timer` load successfully
