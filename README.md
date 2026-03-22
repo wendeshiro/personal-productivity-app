@@ -8,21 +8,33 @@ A personal productivity web app to track focused work sessions, categorize time 
   - [1. Run Locally](#1-run-locally)
     - [Setup](#setup)
     - [Useful commands](#useful-commands)
-  - [2. Route Map](#2-route-map)
+  - [2. Team Contributions](#2-team-contributions)
+    - [Wende](#wende)
+    - [Jisoo](#jisoo)
+    - [Yejin](#yejin)
+    - [Lucie](#lucie)
+  - [3. Route Map](#3-route-map)
     - [View routes](#view-routes)
     - [Action routes](#action-routes)
-  - [3. Project Structure](#3-project-structure)
+  - [4. Project Structure](#4-project-structure)
     - [Folder purposes](#folder-purposes)
     - [File purposes](#file-purposes)
-  - [4. Tech Stack](#4-tech-stack)
-  - [5. Developer Plugins + Commit Naming](#5-developer-plugins--commit-naming)
+  - [5. Tech Stack](#5-tech-stack)
+  - [6. Developer Plugins + Commit Naming](#6-developer-plugins--commit-naming)
     - [Recommended editor plugins](#recommended-editor-plugins)
     - [Commit naming convention (Conventional Commits)](#commit-naming-convention-conventional-commits)
-  - [6. Branch Naming Convention](#6-branch-naming-convention)
-  - [7. Database Schema Diagram](#7-database-schema-diagram)
-  - [8. Architecture Overview](#8-architecture-overview)
+  - [7. Branch Naming Convention](#7-branch-naming-convention)
+  - [8. Database Schema Diagram](#8-database-schema-diagram)
+  - [9. Architecture Overview](#9-architecture-overview)
     - [Notes](#notes)
-  - [9. Deploy on Render](#9-deploy-on-render)
+  - [10. Deploy on Render](#10-deploy-on-render)
+    - [Option A (Recommended): Blueprint (`render.yaml`)](#option-a-recommended-blueprint-renderyaml)
+    - [Option B: Manual Setup in Render Dashboard](#option-b-manual-setup-in-render-dashboard)
+      - [Step 1: Push code to GitHub](#step-1-push-code-to-github)
+      - [Step 2: Create PostgreSQL on Render](#step-2-create-postgresql-on-render)
+      - [Step 3: Create Web Service](#step-3-create-web-service)
+      - [Step 4: Initialize database schema + seed data (one-time)](#step-4-initialize-database-schema--seed-data-one-time)
+      - [Step 5: Verify](#step-5-verify)
 
 ## 1. Run Locally
 
@@ -56,10 +68,36 @@ npm run lint:fix   # lint autofix
 npm run format     # prettier format
 ```
 
-## 2. Route Map
+## 2. Team Contributions
+
+### Wende
+- Project repository initialization and structure design
+- Database schema design and seed data preparation
+- Database connection configuration and integration
+- SQL queries for CRUD operations
+- Render deployment configuration
+
+### Jisoo
+- Lo-fi and hi-fi screen design
+- Component development and reusable layout implementation
+- Workflow creation
+
+### Yejin
+- Lo-fi and hi-fi screen design
+- Style guide creation
+- Component and asset design
+
+### Lucie
+- Lo-fi screen design
+- Frontend development (HTML, CSS, EJS, JavaScript)
+- User flow creation
+
+## 3. Route Map
 
 ### View routes
 - `GET /` → Home (`index.ejs`)
+- `GET /trends` → Trends Report (`trends.ejs`)
+- `GET /api/trends` → Trend data JSON (day/week navigation data)
 - `GET /activities/new` → New Activity (`new-activity.ejs`)
 - `GET /activities/continue` → Continue Activity (`continue-activity.ejs`)
 - `GET /activities/timer` → Timer (`timer.ejs`)
@@ -71,7 +109,7 @@ npm run format     # prettier format
 - `POST /activities/:id/complete` → Mark activity group completed (JSON response)
 - `POST /activities/restore` → Restore activity group (set uncompleted)
 
-## 3. Project Structure
+## 4. Project Structure
 
 ```text
 .
@@ -103,11 +141,12 @@ npm run format     # prettier format
 - `app.js`: Express app instance and middleware/router registration.
 - `db/schema.sql`: PostgreSQL table definitions, constraints, and indexes.
 - `db/seed.sql`: Initial categories + demo activity data.
+- `render.yaml`: Render Blueprint config for provisioning the web service and PostgreSQL database.
 - `eslint.config.js`: ESLint flat config.
 - `.prettierrc`: Prettier formatting config.
 - `.editorconfig`: Editor-level formatting defaults.
 
-## 4. Tech Stack
+## 5. Tech Stack
 
 - Backend: Node.js, Express.js
 - Database: PostgreSQL (`pg` / node-postgres)
@@ -116,7 +155,7 @@ npm run format     # prettier format
 - Code quality/formatting: ESLint, Prettier
 - Dev tooling: Nodemon
 
-## 5. Developer Plugins + Commit Naming
+## 6. Developer Plugins + Commit Naming
 
 ### Recommended editor plugins
 - ESLint (lint diagnostics + auto-fix)
@@ -147,7 +186,7 @@ Examples and usage:
 - `docs(readme): add setup and architecture sections`  
   Use for documentation-only changes.
 
-## 6. Branch Naming Convention
+## 7. Branch Naming Convention
 
 Format:
 ```text
@@ -159,14 +198,14 @@ Examples and usage:
 - `feat/timer-start-stop`
 - `test/activities-controller`
 
-## 7. Database Schema Diagram
+## 8. Database Schema Diagram
 
 ![Database schema diagram](public/image/database-schema.png)
 
 - Relationship: one `category` to many `activities`.
 - Foreign key behavior: deleting a category sets child rows to default category (`id = 1`).
 
-## 8. Architecture Overview
+## 9. Architecture Overview
 
 ```mermaid
 flowchart TD
@@ -181,11 +220,11 @@ flowchart TD
 ### Notes
 - Core database design is implemented in `db/schema.sql` and `db/seed.sql`.
 
-## 9. Deploy on Render
+## 10. Deploy on Render
 
 This project can be deployed as:
-- 1 Render Web Service (Node + Express app)
-- 1 Render PostgreSQL database
+- Render Web Service (Node + Express app)
+- Render PostgreSQL database
 
 ### Option A (Recommended): Blueprint (`render.yaml`)
 This repo includes `render.yaml` at the project root.
@@ -199,17 +238,17 @@ This repo includes `render.yaml` at the project root.
 5. `DATABASE_URL` is auto-wired from the database `connectionString` (internal DB URL) via Blueprint
 
 ### Option B: Manual Setup in Render Dashboard
-### Step 1: Push code to GitHub
+#### Step 1: Push code to GitHub
 Render deploys from a Git repo, so make sure this project is pushed to GitHub first.
 
-### Step 2: Create PostgreSQL on Render
+#### Step 2: Create PostgreSQL on Render
 1. In Render Dashboard: **New +** → **PostgreSQL**
 2. Choose a name/region and create it.
 3. Open DB **Info** page and copy:
 - `Internal Database URL` (for your web service `DATABASE_URL`)
 - `External Database URL` (for one-time schema/seed import from local machine)
 
-### Step 3: Create Web Service
+#### Step 3: Create Web Service
 1. In Render Dashboard: **New +** → **Web Service**
 2. Connect this repository
 3. Set:
@@ -222,7 +261,7 @@ This project now reads:
 - `PORT` from `process.env.PORT` (required for Render)
 - `DATABASE_URL` from environment variables
 
-### Step 4: Initialize database schema + seed data (one-time)
+#### Step 4: Initialize database schema + seed data (one-time)
 Run these on your local machine (with `psql` installed), using the DB's **External Database URL**:
 
 ```bash
@@ -232,7 +271,7 @@ psql "<EXTERNAL_DATABASE_URL>" -f db/seed.sql
 
 If your web service started before schema/seed was applied, trigger a manual redeploy (or restart) once.
 
-### Step 5: Verify
+#### Step 5: Verify
 - Open your Render service URL (`https://<service-name>.onrender.com`)
 - Check `/` and `/activities/timer`
 - If deploy fails, verify `DATABASE_URL` is set and points to the same region/account DB
