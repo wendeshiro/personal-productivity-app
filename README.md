@@ -96,6 +96,7 @@ npm run format     # prettier format
 
 ### View routes
 - `GET /` → Home (`index.ejs`)
+- `GET /healthz` → Health check endpoint (returns `200 OK`)
 - `GET /trends` → Trends Report (`trends.ejs`)
 - `GET /api/trends` → Trend data JSON (day/week navigation data)
 - `GET /activities/new` → New Activity (`new-activity.ejs`)
@@ -236,6 +237,7 @@ This repo includes `render.yaml` at the project root.
 - Web Service: `personal-productivity-app`
 - PostgreSQL: `personal-productivity-db`
 5. `DATABASE_URL` is auto-wired from the database `connectionString` (internal DB URL) via Blueprint
+6. Health check path is configured as `/healthz` (lightweight endpoint that does not depend on database queries)
 
 ### Option B: Manual Setup in Render Dashboard
 #### Step 1: Push code to GitHub
